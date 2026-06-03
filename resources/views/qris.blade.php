@@ -69,8 +69,11 @@
                 Tunjukkan layar ini ke kasir setelah scan.
             </p>
 
-            <div class="mt-6">
-                <a href="/menu" class="block text-center bg-[#634832] text-white py-3 rounded-2xl font-bold text-sm">
+            <div class="mt-6 space-y-3">
+                <button onclick="window.location.href='/estimation?table={{ $table }}'" class="w-full bg-[#634832] text-white py-3 rounded-2xl font-bold text-sm">
+                    Selesai Pembayaran
+                </button>
+                <a href="/menu" class="block text-center text-gray-400 font-bold text-xs hover:underline">
                     Pesan Lagi
                 </a>
             </div>

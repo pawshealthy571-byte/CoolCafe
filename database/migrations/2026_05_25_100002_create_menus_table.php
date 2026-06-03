@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('menus');
+        
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('category', ['bakery', 'coffee', 'main_course']);
+            $table->string('category'); // Using string for flexibility
             $table->decimal('price', 10, 2);
             $table->text('description')->nullable();
+            $table->string('image')->nullable();
             $table->boolean('is_available')->default(true);
             $table->timestamps();
         });

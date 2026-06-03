@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Admin CoolCafe', 'email' => 'admin@coolcafe.test', 'role' => 'admin'],
             ['name' => 'Manager CoolCafe', 'email' => 'manager@coolcafe.test', 'role' => 'manager'],
             ['name' => 'Kasir Pagi', 'email' => 'kasir@coolcafe.test', 'role' => 'cashier'],
+            ['name' => 'Chef Master', 'email' => 'chef@coolcafe.test', 'role' => 'chef'],
         ];
 
         foreach ($users as $user) {
@@ -30,5 +31,9 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        $this->call([
+            MenuSeeder::class,
+        ]);
     }
 }

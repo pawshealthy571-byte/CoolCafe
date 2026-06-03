@@ -11,70 +11,61 @@ Route::get('/', function () {
 });
 
 Route::get('/menu', function () {
-    return view('menu');
+    $menus = App\Models\Menu::where('is_available', true)->get();
+    return view('menu', ['menus' => $menus]);
 });
 
 Route::get('/cashier', function () {
     if (! Auth::check()) {
-        return redirect('/login/kasir');
+        return redirect('/login');
     }
 
-    if (Auth::user()->role !== 'cashier') {
+    if (! in_array(Auth::user()->role, ['cashier', 'admin', 'superadmin'], true)) {
         abort(403);
     }
 
-    return view()->file(resource_path('views/dashboard.cashier.blade.php'));
+    return view('dashboard.cashier');
+});
+
+Route::get('/chef', function () {
+    if (! Auth::check()) {
+        return redirect('/login');
+    }
+
+    if (! in_array(Auth::user()->role, ['chef', 'admin', 'superadmin'], true)) {
+        abort(403);
+    }
+
+    return view('dashboard.chef');
 });
 
 Route::get('/login', function () {
-    return redirect('/login/admin');
-});
-
-Route::get('/login/kasir', function () {
     if (Auth::check()) {
         return redirect('/dashboard');
     }
 
     return view('login', [
-        'mode' => 'kasir',
-        'title' => 'Login Kasir',
-        'subtitle' => 'Khusus akun kasir untuk membuka dashboard kasir.',
-        'action' => '/login/kasir',
+        'mode' => 'unified',
+        'title' => 'Portal Masuk',
+        'subtitle' => 'Masuk ke sistem CoolCafe menggunakan akun Anda.',
+        'action' => '/login',
         'demoUsers' => [
-            'kasir@coolcafe.test / password',
-        ],
-    ]);
-});
-
-Route::post('/login/kasir', function (Request $request) {
-    return attemptRoleLogin($request, ['cashier'], '/cashier');
-});
-
-Route::get('/login/admin', function () {
-    if (Auth::check()) {
-        return redirect('/dashboard');
-    }
-
-    return view('login', [
-        'mode' => 'admin',
-        'title' => 'Login Admin',
-        'subtitle' => 'Untuk superadmin, admin, dan manager CoolCafe.',
-        'action' => '/login/admin',
-        'demoUsers' => [
-            'superadmin@coolcafe.test / password',
             'admin@coolcafe.test / password',
-            'manager@coolcafe.test / password',
+            'kasir@coolcafe.test / password',
+            'chef@coolcafe.test / password',
         ],
     ]);
-});
-
-Route::post('/login/admin', function (Request $request) {
-    return attemptRoleLogin($request, ['superadmin', 'admin', 'manager'], '/dashboard');
 });
 
 Route::post('/login', function (Request $request) {
-    return attemptRoleLogin($request, ['superadmin', 'admin', 'manager', 'cashier'], '/dashboard');
+    return attemptRoleLogin($request, ['superadmin', 'admin', 'manager', 'cashier', 'chef'], '/dashboard');
 });
+
+// Redirect old login paths to the new unified login
+Route::get('/login/pegawai', fn() => redirect('/login'));
+Route::get('/login/admin', fn() => redirect('/login'));
+Route::get('/login/kasir', fn() => redirect('/login'));
+Route::get('/login/chef', fn() => redirect('/login'));
 
 function attemptRoleLogin(Request $request, array $roles, string $redirectTo)
 {
@@ -96,7 +87,7 @@ function attemptRoleLogin(Request $request, array $roles, string $redirectTo)
         $request->session()->regenerateToken();
 
         return back()
-            ->withErrors(['email' => 'Akun ini tidak punya akses ke halaman login tersebut.'])
+            ->withErrors(['email' => 'Akun ini tidak memiliki akses ke portal ini.'])
             ->onlyInput('email');
     }
 
@@ -106,40 +97,49 @@ function attemptRoleLogin(Request $request, array $roles, string $redirectTo)
 }
 
 Route::post('/logout', function (Request $request) {
-    $loginPath = Auth::user()?->role === 'cashier' ? '/login/kasir' : '/login/admin';
-
     Auth::logout();
 
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
-    return redirect($loginPath);
+    return redirect('/login');
 });
+
+Route::get('/admin', fn () => redirect('/dashboard/admin'));
+Route::get('/manager', fn () => redirect('/dashboard/manager'));
+Route::get('/superadmin', fn () => redirect('/dashboard/superadmin'));
 
 Route::get('/dashboard', function () {
     if (! Auth::check()) {
-        return redirect('/login/admin');
+        return redirect('/login');
     }
 
-    return redirect('/dashboard/'.Auth::user()->role);
+    $role = Auth::user()->role;
+    if ($role === 'cashier') return redirect('/cashier');
+    if ($role === 'chef') return redirect('/chef');
+    
+    return redirect('/dashboard/'.$role);
 });
 
 Route::get('/dashboard/{role}', function (string $role) {
     if (! Auth::check()) {
-        return redirect('/login/admin');
+        return redirect('/login');
     }
 
     $user = Auth::user();
-    $allowedRoles = ['superadmin', 'admin', 'manager', 'cashier'];
-
-    if ($role === 'cashier' && $user->role !== 'cashier') {
+    
+    // Automatic redirection logic
+    if ($user->role === 'cashier') return redirect('/cashier');
+    if ($user->role === 'chef') return redirect('/chef');
+    
+    // If Admin/Manager tries to access someone else's dashboard or invalid role
+    if (!in_array($user->role, ['superadmin', 'admin', 'manager'], true)) {
         abort(403);
     }
 
-    $canOpenDashboard = $user->role === 'superadmin' || $user->role === $role;
-
-    if (! in_array($role, $allowedRoles, true) || ! $canOpenDashboard) {
-        abort(403);
+    $allowedRoles = ['superadmin', 'admin', 'manager'];
+    if (! in_array($role, $allowedRoles, true)) {
+        return redirect('/dashboard/'.$user->role);
     }
 
     $sales = collect(readCoolCafeSales());
@@ -148,11 +148,7 @@ Route::get('/dashboard/{role}', function (string $role) {
     $today = now()->timezone(config('app.timezone'))->toDateString();
     $todaySales = $sales->filter(fn ($sale) => ($sale['completedDate'] ?? $sale['date'] ?? '') === $today);
 
-    if ($role === 'cashier') {
-        return redirect('/cashier');
-    }
-
-    return view()->file(resource_path('views/dashboard.admin.blade.php'), [
+    return view('dashboard.admin', [
         'role' => $role,
         'user' => $user,
         'users' => $users,
@@ -170,8 +166,14 @@ Route::get('/qris', function (Request $request) {
     ]);
 });
 
+Route::get('/estimation', function (Request $request) {
+    return view('estimation', [
+        'table' => $request->query('table', '-')
+    ]);
+});
+
 Route::get('/orders', function () {
-    if (! userHasRole(['cashier'])) {
+    if (! userHasRole(['cashier', 'chef', 'admin', 'superadmin'])) {
         return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 
@@ -188,6 +190,8 @@ Route::post('/orders', function (Request $request) {
         'items.*.price' => ['required', 'numeric', 'min:0'],
         'items.*.quantity' => ['required', 'integer', 'min:1'],
         'items.*.options' => ['nullable', 'array'],
+        'subtotal' => ['required', 'numeric', 'min:0'],
+        'tax' => ['required', 'numeric', 'min:0'],
         'total' => ['required', 'numeric', 'min:0'],
     ]);
 
@@ -198,9 +202,12 @@ Route::post('/orders', function (Request $request) {
         'payment' => $data['payment'],
         'orderNote' => $data['orderNote'] ?? '',
         'items' => $data['items'],
+        'subtotal' => $data['subtotal'],
+        'tax' => $data['tax'],
         'total' => $data['total'],
         'date' => now()->timezone(config('app.timezone'))->toDateString(),
         'time' => now()->timezone(config('app.timezone'))->format('H:i:s'),
+        'status' => 'pending'
     ];
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
@@ -209,7 +216,7 @@ Route::post('/orders', function (Request $request) {
 });
 
 Route::post('/orders/{id}/complete', function ($id) {
-    if (! userHasRole(['cashier'])) {
+    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
         return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 
@@ -238,8 +245,32 @@ Route::post('/orders/{id}/complete', function ($id) {
     return response()->json(['ok' => true]);
 });
 
+Route::post('/orders/{id}/ready', function ($id) {
+    if (! userHasRole(['chef', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    $orders = readCoolCafeOrders();
+    $found = false;
+    foreach ($orders as &$order) {
+        if ((string) ($order['id'] ?? '') === (string) $id) {
+            $order['status'] = 'ready';
+            $found = true;
+            break;
+        }
+    }
+
+    if (! $found) {
+        return response()->json(['ok' => false, 'message' => 'Order tidak ditemukan'], 404);
+    }
+
+    Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
+
+    return response()->json(['ok' => true]);
+});
+
 Route::delete('/orders/{id}', function ($id) {
-    if (! userHasRole(['cashier'])) {
+    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
         return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 
@@ -254,7 +285,7 @@ Route::delete('/orders/{id}', function ($id) {
 });
 
 Route::delete('/orders', function () {
-    if (! userHasRole(['cashier'])) {
+    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
         return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 
@@ -307,6 +338,78 @@ Route::get('/sales-report', function (Request $request) {
         'topItems' => $itemSummary,
         'sales' => $sales->sortByDesc(fn ($sale) => $sale['completedAt'] ?? $sale['time'] ?? '')->values()->all(),
     ]);
+});
+
+Route::get('/admin/management/menus', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        abort(403);
+    }
+    return view('dashboard.menus');
+});
+
+Route::get('/admin/menus', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    return response()->json(App\Models\Menu::all());
+});
+
+Route::post('/admin/menus', function (Request $request) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'category' => ['required', 'string', 'max:255'],
+        'price' => ['required', 'numeric', 'min:0'],
+        'description' => ['nullable', 'string'],
+        'image' => ['nullable', 'string', 'url'],
+        'add_ons' => ['nullable', 'array'],
+        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
+        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
+        'is_available' => ['required', 'boolean'],
+    ]);
+
+    $menu = App\Models\Menu::create($data);
+
+    return response()->json($menu);
+});
+
+Route::put('/admin/menus/{id}', function (Request $request, $id) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    $menu = App\Models\Menu::findOrFail($id);
+
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'category' => ['required', 'string', 'max:255'],
+        'price' => ['required', 'numeric', 'min:0'],
+        'description' => ['nullable', 'string'],
+        'image' => ['nullable', 'string', 'url'],
+        'add_ons' => ['nullable', 'array'],
+        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
+        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
+        'is_available' => ['required', 'boolean'],
+    ]);
+
+    $menu->update($data);
+
+    return response()->json($menu);
+});
+
+Route::delete('/admin/menus/{id}', function ($id) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    $menu = App\Models\Menu::findOrFail($id);
+    $menu->delete();
+
+    return response()->json(['ok' => true]);
 });
 
 Route::delete('/sales-report', function () {

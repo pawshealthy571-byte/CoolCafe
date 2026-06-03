@@ -160,65 +160,36 @@
         <button onclick="filterCategory('Bakery')" class="category-pill whitespace-nowrap px-6 py-2 rounded-full border border-[#634832] text-sm font-medium text-[#634832]">Bakery</button>
         <button onclick="filterCategory('Beverages')" class="category-pill whitespace-nowrap px-6 py-2 rounded-full border border-[#634832] text-sm font-medium text-[#634832]">Coffee & Beverages</button>
         <button onclick="filterCategory('Main Course')" class="category-pill whitespace-nowrap px-6 py-2 rounded-full border border-[#634832] text-sm font-medium text-[#634832]">Main Course</button>
+        <button onclick="filterCategory('Paket')" class="category-pill whitespace-nowrap px-6 py-2 rounded-full border border-[#634832] text-sm font-medium text-[#634832]">Paket</button>
     </nav>
 
     <!-- Menu List -->
     <div id="menu-container" class="px-4 space-y-4">
-        <!-- Bakery Items -->
-        <div class="menu-item" data-category="Bakery">
+        @foreach($menus as $menu)
+        <div class="menu-item" data-category="{{ $menu->category }}">
             <div class="menu-card bg-white rounded-2xl p-3 flex gap-4 shadow-sm">
                 <div class="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&h=200&fit=crop" alt="Croissant" class="w-full h-full object-cover">
+                    <img src="{{ $menu->image ?? 'https://placehold.co/200x200?text=No+Image' }}" alt="{{ $menu->name }}" class="w-full h-full object-cover">
                 </div>
                 <div class="flex flex-col justify-between flex-grow">
                     <div>
-                        <h3 class="font-semibold text-gray-800">Butter Croissant</h3>
-                        <p class="text-xs text-gray-500 line-clamp-2">Roti klasik Prancis dengan tekstur renyah.</p>
+                        <h3 class="font-semibold text-gray-800">{{ $menu->name }}</h3>
+                        <p class="text-xs text-gray-500 line-clamp-2">{{ $menu->description }}</p>
                     </div>
                     <div class="flex justify-between items-center mt-2">
-                        <span class="font-bold text-[#634832]">Rp 22.000</span>
-                        <button onclick="addToCart('Butter Croissant', 22000)" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
+                        <span class="font-bold text-[#634832]">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
+                        @if($menu->category === 'Beverages')
+                            <button onclick="openCustomization('{{ $menu->name }}', {{ $menu->price }})" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
+                        @elseif($menu->category === 'Paket')
+                            <button onclick="openPackageCustomization({{ json_encode(['name' => $menu->name, 'price' => $menu->price, 'add_ons' => $menu->add_ons ?? []]) }})" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
+                        @else
+                            <button onclick="addToCart('{{ $menu->name }}', {{ $menu->price }})" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Coffee Items -->
-        <div class="menu-item" data-category="Beverages">
-            <div class="menu-card bg-white rounded-2xl p-3 flex gap-4 shadow-sm">
-                <div class="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src="https://images.unsplash.com/photo-1536939459926-301728717817?w=200&h=200&fit=crop" alt="Latte" class="w-full h-full object-cover">
-                </div>
-                <div class="flex flex-col justify-between flex-grow">
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Signature Cafe Latte</h3>
-                        <p class="text-xs text-gray-500 line-clamp-2">Espresso dengan susu steam halus.</p>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="font-bold text-[#634832]">Rp 32.000</span>
-                        <button onclick="openCustomization('Signature Cafe Latte', 32000)" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-item" data-category="Main Course">
-            <div class="menu-card bg-white rounded-2xl p-3 flex gap-4 shadow-sm">
-                <div class="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop" alt="Bowl" class="w-full h-full object-cover">
-                </div>
-                <div class="flex flex-col justify-between flex-grow">
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Healthy Chicken Bowl</h3>
-                        <p class="text-xs text-gray-500 line-clamp-2">Nasi coklat, ayam panggang, dan sayuran.</p>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="font-bold text-[#634832]">Rp 45.000</span>
-                        <button onclick="addToCart('Healthy Chicken Bowl', 45000)" class="bg-[#634832] text-white px-3 py-1 rounded-lg text-xs font-medium">Tambah</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @endforeach
     </div>
 
     <!-- Bottom Nav -->
@@ -269,9 +240,19 @@
             </div>
 
             <div class="border-t pt-4">
-                <div class="flex justify-between font-bold text-lg mb-6 text-[#634832]">
-                    <span>Total</span>
-                    <span id="modal-total">Rp 0</span>
+                <div class="space-y-2 mb-6">
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Subtotal</span>
+                        <span id="modal-subtotal">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Pajak (12%)</span>
+                        <span id="modal-tax">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-lg text-[#634832] pt-2 border-t border-dashed">
+                        <span>Total Akhir</span>
+                        <span id="modal-total">Rp 0</span>
+                    </div>
                 </div>
                 <button onclick="sendOrder()" class="w-full bg-[#634832] text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95">
                     Kirim Pesanan
@@ -302,9 +283,32 @@
         </div>
     </div>
 
+    <!-- Package Add-on Modal -->
+    <div id="package-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[70] hidden flex items-end">
+        <div class="bg-white w-full rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full" id="package-sheet">
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div>
+                    <h2 id="package-title" class="text-xl font-bold text-gray-800">Paket</h2>
+                    <p id="package-base-price" class="text-sm font-bold text-[#634832] mt-1">Rp 0</p>
+                </div>
+                <button onclick="closePackageCustomization()" class="text-gray-400"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="mb-6">
+                <p class="text-sm font-bold text-gray-800 mb-3">Add-on</p>
+                <div id="package-add-ons" class="space-y-3"></div>
+            </div>
+            <div class="mb-6">
+                <p class="text-sm font-bold text-gray-800 mb-3">Catatan Paket</p>
+                <textarea id="package-note" placeholder="Contoh: minuman dingin..." class="w-full bg-gray-50 rounded-xl p-3 text-sm h-20 outline-none"></textarea>
+            </div>
+            <button onclick="confirmPackageCustomization()" class="w-full bg-[#634832] text-white py-4 rounded-2xl font-bold text-lg">Tambah Paket</button>
+        </div>
+    </div>
+
     <script>
         let cart = [];
         let currentCustomItem = null;
+        let currentPackageItem = null;
         let toastTimer = null;
 
         function showConfirm({ title = 'Konfirmasi', message = '', detail = '', okText = 'Lanjut', cancelText = 'Batal' }) {
@@ -384,6 +388,57 @@
             setTimeout(() => document.getElementById('custom-modal').classList.add('hidden'), 300);
         }
 
+        function openPackageCustomization(menu) {
+            currentPackageItem = menu;
+            const modal = document.getElementById('package-modal');
+            const sheet = document.getElementById('package-sheet');
+            const addOns = menu.add_ons || [];
+
+            document.getElementById('package-title').innerText = menu.name;
+            document.getElementById('package-base-price').innerText = 'Rp ' + Number(menu.price).toLocaleString('id-ID');
+            document.getElementById('package-note').value = '';
+
+            const container = document.getElementById('package-add-ons');
+            container.innerHTML = addOns.length ? '' : '<p class="text-xs text-gray-400 bg-gray-50 rounded-xl p-4">Paket ini belum punya add-on.</p>';
+            addOns.forEach((addOn, index) => {
+                const row = document.createElement('label');
+                row.className = 'flex items-center justify-between gap-4 bg-gray-50 rounded-xl p-4 cursor-pointer';
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" class="package-add-on rounded border-gray-300 text-[#634832] focus:ring-[#634832]" data-index="${index}">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">${addOn.name}</p>
+                            <p class="text-xs text-gray-500">Tambah Rp ${Number(addOn.price || 0).toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-plus text-[#634832] text-xs"></i>
+                `;
+                container.appendChild(row);
+            });
+
+            modal.classList.remove('hidden');
+            setTimeout(() => sheet.classList.remove('translate-y-full'), 10);
+        }
+
+        function confirmPackageCustomization() {
+            const selectedAddOns = Array.from(document.querySelectorAll('.package-add-on:checked'))
+                .map(input => currentPackageItem.add_ons[Number(input.dataset.index)]);
+            const addOnTotal = selectedAddOns.reduce((total, addOn) => total + Number(addOn.price || 0), 0);
+            const note = document.getElementById('package-note').value;
+
+            addToCart(currentPackageItem.name, Number(currentPackageItem.price) + addOnTotal, {
+                type: 'Paket',
+                addOns: selectedAddOns,
+                note
+            });
+            closePackageCustomization();
+        }
+
+        function closePackageCustomization() {
+            document.getElementById('package-sheet').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('package-modal').classList.add('hidden'), 300);
+        }
+
         function removeFromCart(name, options = null) {
             const idx = cart.findIndex(item => item.name === name && JSON.stringify(item.options) === JSON.stringify(options));
             if (idx > -1) { if (cart[idx].quantity > 1) { cart[idx].quantity -= 1; } else { cart.splice(idx, 1); } }
@@ -392,22 +447,37 @@
 
         function updateCartUI() {
             const count = cart.reduce((acc, i) => acc + i.quantity, 0);
-            const total = cart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+            const subtotal = cart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+            const tax = Math.round(subtotal * 0.12);
+            const total = subtotal + tax;
+
             document.getElementById('cart-count').innerText = count;
             document.getElementById('cart-count').classList.toggle('hidden', count === 0);
             document.getElementById('cart-footer').classList.toggle('hidden', count === 0);
             document.getElementById('cart-total').innerText = 'Rp ' + total.toLocaleString('id-ID');
+            
+            document.getElementById('modal-subtotal').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+            document.getElementById('modal-tax').innerText = 'Rp ' + tax.toLocaleString('id-ID');
             document.getElementById('modal-total').innerText = 'Rp ' + total.toLocaleString('id-ID');
 
             const container = document.getElementById('cart-items');
             container.innerHTML = cart.length ? '' : '<p class="text-center py-10 text-gray-400">Kosong</p>';
             cart.forEach(item => {
-                const opt = item.options ? `<p class="text-[10px] text-gray-400">${item.options.sweetness}${item.options.note ? ' | ' + item.options.note : ''}</p>` : '';
+                const opt = item.options ? `<p class="text-[10px] text-gray-400">${formatOptions(item.options)}</p>` : '';
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-xl';
                 div.innerHTML = `<div class="flex-grow"><p class="font-medium text-sm">${item.name}</p>${opt}</div><div class="flex items-center gap-3"><button onclick="removeFromCart('${item.name}', ${item.options ? JSON.stringify(item.options).replace(/"/g, '&quot;') : 'null'})" class="w-8 h-8 rounded-full border flex items-center justify-center">-</button><span class="text-sm font-semibold">${item.quantity}</span><button onclick="addToCart('${item.name}', ${item.price}, ${item.options ? JSON.stringify(item.options).replace(/"/g, '&quot;') : 'null'})" class="w-8 h-8 rounded-full bg-[#634832] text-white flex items-center justify-center">+</button></div>`;
                 container.appendChild(div);
             });
+        }
+
+        function formatOptions(options) {
+            if (options.type === 'Paket') {
+                const addOns = (options.addOns || []).map(addOn => addOn.name).join(', ');
+                return `${addOns ? 'Add-on: ' + addOns : 'Tanpa add-on'}${options.note ? ' | ' + options.note : ''}`;
+            }
+
+            return `${options.sweetness || ''}${options.note ? ' | ' + options.note : ''}`;
         }
 
         function toggleCart() { document.getElementById('cart-modal').classList.toggle('hidden'); }
@@ -422,11 +492,13 @@
             if (!table) return showToast('Input nomor meja dulu.', 'error');
             const payment = document.querySelector('input[name="payment-method"]:checked').value;
             const orderNote = document.getElementById('order-note').value;
-            const total = cart.reduce((a, b) => a + (b.price * b.quantity), 0);
+            const subtotal = cart.reduce((a, b) => a + (b.price * b.quantity), 0);
+            const tax = Math.round(subtotal * 0.12);
+            const total = subtotal + tax;
             
             let summary = `Detail Pesanan - Meja ${table}\nPembayaran: ${payment}\n${orderNote ? 'Catatan: ' + orderNote + '\n' : ''}------------------\n`;
-            cart.forEach(i => summary += `${i.name} x${i.quantity}${i.options ? ' (' + i.options.sweetness + ')' : ''}\n`);
-            summary += `------------------\nTotal: Rp ${total.toLocaleString('id-ID')}`;
+            cart.forEach(i => summary += `${i.name} x${i.quantity}${i.options ? ' (' + formatOptions(i.options) + ')' : ''}\n`);
+            summary += `------------------\nSubtotal: Rp ${subtotal.toLocaleString('id-ID')}\nPajak (12%): Rp ${tax.toLocaleString('id-ID')}\nTotal Akhir: Rp ${total.toLocaleString('id-ID')}`;
             
             if (await showConfirm({
                 title: 'Kirim pesanan?',
@@ -447,6 +519,8 @@
                             payment: payment,
                             orderNote: orderNote,
                             items: cart,
+                            subtotal: subtotal,
+                            tax: tax,
                             total: total
                         })
                     });
@@ -454,17 +528,23 @@
                     if (!response.ok) throw new Error('Gagal mengirim pesanan');
 
                     showToast(payment === 'QRIS' ? 'Pesanan dikirim. Membuka QRIS...' : 'Pesanan dikirim!');
+                    const tableNum = table; // save to local variable
                     cart = []; updateCartUI(); toggleCart();
                     document.getElementById('table-number').value = '';
                     document.getElementById('order-note').value = '';
 
                     if (payment === 'QRIS') {
                         const params = new URLSearchParams({
-                            table: table,
+                            table: tableNum,
                             total: total
                         });
                         setTimeout(() => {
                             window.location.href = `/qris?${params.toString()}`;
+                        }, 800);
+                    } else {
+                        // For Cash, go directly to estimation
+                        setTimeout(() => {
+                            window.location.href = `/estimation?table=${tableNum}`;
                         }, 800);
                     }
                 } catch (error) {
