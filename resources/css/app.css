@@ -6,6 +6,38 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-coffee: #634832;
+    --color-coffee-dark: #4f3928;
+}
+
+@layer components {
+    .btn-primary {
+        @apply bg-coffee text-white px-4 py-2 rounded-xl font-semibold transition-all hover:bg-coffee-dark;
+    }
+    
+    .card {
+        @apply bg-white rounded-2xl p-5 shadow-sm border border-gray-100;
+    }
+
+    .category-pill {
+        @apply whitespace-nowrap px-6 py-2 rounded-full border border-coffee text-sm font-medium text-coffee transition-all;
+    }
+
+    .category-pill.active {
+        @apply bg-coffee text-white;
+    }
+
+    .toast {
+        @apply fixed left-1/2 top-5 z-[100] w-[calc(100%-32px)] max-w-[380px] p-4 rounded-[18px] bg-white text-gray-800 shadow-xl border-l-[6px] border-coffee -translate-x-1/2 -translate-y-[18px] opacity-0 pointer-events-none transition-all duration-300;
+    }
+
+    .toast.show {
+        @apply opacity-100 translate-y-0;
+    }
+
+    .toast.error {
+        @apply border-red-500;
+    }
 }

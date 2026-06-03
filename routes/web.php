@@ -365,19 +365,28 @@ Route::post('/admin/menus', function (Request $request) {
         'category' => ['required', 'string', 'max:255'],
         'price' => ['required', 'numeric', 'min:0'],
         'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string', 'url'],
-        'add_ons' => ['nullable', 'array'],
-        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
-        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
-        'is_available' => ['required', 'boolean'],
+        'add_ons' => ['nullable'],
+        'is_available' => ['required'],
+        'image_file' => ['nullable', 'image', 'max:5120'],
     ]);
+
+    if (isset($data['add_ons']) && is_string($data['add_ons'])) {
+        $data['add_ons'] = json_decode($data['add_ons'], true);
+    }
+
+    $data['is_available'] = filter_var($request->input('is_available') ?? true, FILTER_VALIDATE_BOOLEAN);
+
+    $imageError = storeMenuImage($request, $data);
+    if ($imageError) {
+        return response()->json(['message' => $imageError], 422);
+    }
 
     $menu = App\Models\Menu::create($data);
 
     return response()->json($menu);
 });
 
-Route::put('/admin/menus/{id}', function (Request $request, $id) {
+Route::match(['post', 'put'], '/admin/menus/{id}', function (Request $request, $id) {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
         return response()->json(['message' => 'Unauthenticated.'], 401);
     }
@@ -389,12 +398,21 @@ Route::put('/admin/menus/{id}', function (Request $request, $id) {
         'category' => ['required', 'string', 'max:255'],
         'price' => ['required', 'numeric', 'min:0'],
         'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string', 'url'],
-        'add_ons' => ['nullable', 'array'],
-        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
-        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
-        'is_available' => ['required', 'boolean'],
+        'add_ons' => ['nullable'],
+        'is_available' => ['nullable'],
+        'image_file' => ['nullable', 'image', 'max:5120'],
     ]);
+
+    if (isset($data['add_ons']) && is_string($data['add_ons'])) {
+        $data['add_ons'] = json_decode($data['add_ons'], true);
+    }
+
+    $data['is_available'] = filter_var($request->input('is_available') ?? true, FILTER_VALIDATE_BOOLEAN);
+
+    $imageError = storeMenuImage($request, $data, $menu);
+    if ($imageError) {
+        return response()->json(['message' => $imageError], 422);
+    }
 
     $menu->update($data);
 
@@ -431,6 +449,27 @@ function readCoolCafeOrders(): array
     $orders = json_decode(Storage::disk('local')->get('coolcafe_orders.json'), true);
 
     return is_array($orders) ? $orders : [];
+}
+
+function storeMenuImage(Request $request, array &$data, ?App\Models\Menu $menu = null): ?string
+{
+    $uploadedImage = $request->file('image_file');
+
+    if (! $uploadedImage) {
+        return null;
+    }
+
+    if (! $uploadedImage->isValid()) {
+        return 'Upload gambar gagal: '.$uploadedImage->getErrorMessage();
+    }
+
+    if ($menu?->image && ! str_starts_with($menu->image, 'http')) {
+        Storage::disk('public')->delete($menu->image);
+    }
+
+    $data['image'] = $uploadedImage->store('menus', 'public');
+
+    return null;
 }
 
 function userHasRole(array $roles): bool

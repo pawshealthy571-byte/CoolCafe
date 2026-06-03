@@ -17,33 +17,10 @@
 
     <!-- Scripts / Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
             background-color: #FDFDFC;
-        }
-        .bg-coffee { background-color: #634832; }
-        .text-coffee { color: #634832; }
-        .border-coffee { border-color: #634832; }
-        .btn-primary {
-            background-color: #634832;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #4f3928;
-        }
-        .card {
-            background-color: white;
-            border-radius: 1rem;
-            padding: 1.25rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            border: 1px solid #f3f4f6;
         }
     </style>
     @stack('styles')
@@ -67,28 +44,18 @@
                 <!-- Navigation Links -->
                 <nav class="flex-1 p-4 space-y-2">
                     @auth
-                        <div class="mb-4 px-2">
-                            <p class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-2">Utama</p>
-                            @if(in_array(Auth::user()->role, ['cashier', 'admin', 'superadmin', 'chef']))
-                                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all {{ Request::is('dashboard*') && !Request::is('admin/management/menus') ? 'bg-white/10 font-bold' : 'text-white/70' }}">
-                                    <i class="fas fa-chart-pie w-5"></i>
-                                    <span class="text-sm">Dashboard</span>
-                                </a>
-                            @endif
-                            @if(!in_array(Auth::user()->role, ['admin', 'superadmin', 'cashier', 'chef']))
+                        @if(in_array(Auth::user()->role, ['admin', 'superadmin', 'manager']))
+                            @include('layouts.partials.sidebar-admin')
+                        @elseif(Auth::user()->role === 'cashier')
+                            @include('layouts.partials.sidebar-cashier')
+                        @elseif(Auth::user()->role === 'chef')
+                            @include('layouts.partials.sidebar-chef')
+                        @else
+                            <div class="mb-4 px-2">
+                                <p class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-2">Utama</p>
                                 <a href="/menu" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all {{ Request::is('menu*') ? 'bg-white/10 font-bold' : 'text-white/70' }}">
                                     <i class="fas fa-utensils w-5"></i>
                                     <span class="text-sm">Lihat Menu</span>
-                                </a>
-                            @endif
-                        </div>
-
-                        @if(in_array(Auth::user()->role, ['admin', 'superadmin']))
-                            <div class="mb-4 px-2">
-                                <p class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-2">Manajemen</p>
-                                <a href="/admin/management/menus" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all {{ Request::is('admin/management/menus') ? 'bg-white/10 font-bold' : 'text-white/70' }}">
-                                    <i class="fas fa-list-check w-5"></i>
-                                    <span class="text-sm">Kelola Menu</span>
                                 </a>
                             </div>
                         @endif

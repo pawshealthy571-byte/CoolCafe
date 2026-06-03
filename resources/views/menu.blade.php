@@ -5,20 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CoolCafe - Digital Menu</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body {
-            font-family: 'Poppins', sans-serif;
             background-color: #f8f5f2;
-        }
-        .category-pill {
-            transition: all 0.3s ease;
-        }
-        .category-pill.active {
-            background-color: #634832;
-            color: white;
         }
         .menu-card {
             transition: transform 0.2s;
@@ -50,31 +41,6 @@
         .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
-        }
-        .toast {
-            position: fixed;
-            left: 50%;
-            top: 20px;
-            z-index: 100;
-            width: calc(100% - 32px);
-            max-width: 380px;
-            padding: 14px 16px;
-            border-radius: 18px;
-            background: #ffffff;
-            color: #1f2937;
-            box-shadow: 0 20px 45px rgba(31, 41, 55, 0.18);
-            border-left: 6px solid #634832;
-            transform: translate(-50%, -18px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-        }
-        .toast.error {
-            border-left-color: #ef4444;
         }
         .confirm-backdrop {
             position: fixed;
@@ -169,7 +135,13 @@
         <div class="menu-item" data-category="{{ $menu->category }}">
             <div class="menu-card bg-white rounded-2xl p-3 flex gap-4 shadow-sm">
                 <div class="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src="{{ $menu->image ?? 'https://placehold.co/200x200?text=No+Image' }}" alt="{{ $menu->name }}" class="w-full h-full object-cover">
+                    @php
+                        $imageUrl = $menu->image ?? 'https://placehold.co/200x200?text=No+Image';
+                        if ($menu->image && !str_starts_with($menu->image, 'http')) {
+                            $imageUrl = asset('storage/' . $menu->image);
+                        }
+                    @endphp
+                    <img src="{{ $imageUrl }}" alt="{{ $menu->name }}" class="w-full h-full object-cover">
                 </div>
                 <div class="flex flex-col justify-between flex-grow">
                     <div>
