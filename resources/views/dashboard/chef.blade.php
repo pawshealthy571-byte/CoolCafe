@@ -37,13 +37,6 @@
 @endpush
 
 @section('content')
-<div id="toast" class="toast">
-    <div class="flex items-start gap-3">
-        <i class="fas fa-check-circle text-green-500 mt-1"></i>
-        <p id="toast-message" class="text-sm font-semibold"></p>
-    </div>
-</div>
-
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
     <div>
         <h2 class="text-2xl font-bold text-gray-800">Dapur CoolCafe</h2>
@@ -53,6 +46,14 @@
         <span class="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold">
             <i class="fas fa-fire-burner mr-2"></i>Kitchen Mode
         </span>
+    </div>
+</div>
+
+<div id="ingredient-notifications" class="hidden mb-8 bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-4">
+    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+    <div>
+        <h4 class="font-bold text-red-800">Stok Bahan Habis!</h4>
+        <p id="low-stock-list" class="text-xs text-red-600"></p>
     </div>
 </div>
 
@@ -72,17 +73,6 @@
 
 @push('scripts')
 <script>
-    let toastTimer = null;
-
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        document.getElementById('toast-message').innerText = message;
-
-        clearTimeout(toastTimer);
-        toast.classList.add('show');
-        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-
     const orderCards = new Map();
 
     async function loadOrders() {
@@ -192,7 +182,7 @@
         });
 
         if (response.ok) {
-            showToast('Notifikasi dikirim ke kasir!');
+            window.showToast('Notifikasi dikirim ke kasir!');
             loadOrders();
         }
     }
@@ -208,5 +198,24 @@
 
     loadOrders();
     setInterval(loadOrders, 5000);
+
+    async function checkStock() {
+        const response = await fetch('/admin/ingredients');
+        const ingredients = await response.json();
+        const lowStock = ingredients.filter(i => i.stock === 0);
+        
+        const container = document.getElementById('ingredient-notifications');
+        const list = document.getElementById('low-stock-list');
+
+        if (lowStock.length > 0) {
+            list.textContent = lowStock.map(i => i.name).join(', ');
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    checkStock();
+    setInterval(checkStock, 60000);
 </script>
 @endpush

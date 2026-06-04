@@ -84,16 +84,6 @@
                 MASUK SEKARANG
             </button>
 
-            <div class="bg-amber-50 rounded-[1.5rem] p-5 border border-amber-100">
-                <p class="text-[9px] font-bold text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i class="fas fa-key"></i> Akun Demo
-                </p>
-                <div class="space-y-1.5">
-                    @foreach ($demoUsers as $demoUser)
-                        <p class="text-[10px] text-amber-800/80 font-medium bg-white/50 px-3 py-1.5 rounded-lg border border-amber-200/50">{{ $demoUser }}</p>
-                    @endforeach
-                </div>
-            </div>
         </form>
     </main>
 </body>

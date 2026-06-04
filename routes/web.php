@@ -20,7 +20,7 @@ Route::get('/cashier', function () {
         return redirect('/login');
     }
 
-    if (! in_array(Auth::user()->role, ['cashier', 'admin', 'superadmin'], true)) {
+    if (! in_array(Auth::user()->role, ['cashier', 'admin', 'superadmin', 'manager'], true)) {
         abort(403);
     }
 
@@ -32,7 +32,7 @@ Route::get('/chef', function () {
         return redirect('/login');
     }
 
-    if (! in_array(Auth::user()->role, ['chef', 'admin', 'superadmin'], true)) {
+    if (! in_array(Auth::user()->role, ['chef', 'admin', 'superadmin', 'manager'], true)) {
         abort(403);
     }
 
@@ -49,11 +49,6 @@ Route::get('/login', function () {
         'title' => 'Portal Masuk',
         'subtitle' => 'Masuk ke sistem CoolCafe menggunakan akun Anda.',
         'action' => '/login',
-        'demoUsers' => [
-            'admin@coolcafe.test / password',
-            'kasir@coolcafe.test / password',
-            'chef@coolcafe.test / password',
-        ],
     ]);
 });
 
@@ -109,6 +104,44 @@ Route::get('/admin', fn () => redirect('/dashboard/admin'));
 Route::get('/manager', fn () => redirect('/dashboard/manager'));
 Route::get('/superadmin', fn () => redirect('/dashboard/superadmin'));
 
+Route::post('/admin/upload-image', function (Request $request) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+
+    $request->validate([
+        'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+    ]);
+
+    $path = $request->file('image')->store('menu-images', 'public');
+    
+    return response()->json([
+        'path' => Storage::url($path),
+    ]);
+});
+
+Route::get('/sales-report', function (Request $request) {
+    if (! userHasRole(['manager', 'admin', 'superadmin', 'cashier'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+
+    $allSales = readCoolCafeSales();
+    
+    if ($request->has('all')) {
+        return response()->json($allSales);
+    }
+
+    $date = $request->query('date', now()->timezone(config('app.timezone'))->toDateString());
+    $sales = collect($allSales)->filter(fn ($sale) => ($sale['completedDate'] ?? $sale['date'] ?? '') === $date)->values();
+    
+    return response()->json([
+        'date' => $date,
+        'transactions' => $sales->count(),
+        'revenue' => $sales->sum(fn ($sale) => (float) ($sale['total'] ?? 0)),
+        'sales' => $sales->sortByDesc(fn ($sale) => $sale['completedAt'] ?? $sale['time'] ?? '')->values()->all(),
+    ]);
+});
+
 Route::get('/dashboard', function () {
     if (! Auth::check()) {
         return redirect('/login');
@@ -144,9 +177,11 @@ Route::get('/dashboard/{role}', function (string $role) {
 
     $sales = collect(readCoolCafeSales());
     $orders = collect(readCoolCafeOrders());
+    $expenses = collect(readCoolCafeExpenses());
     $users = User::orderBy('role')->orderBy('name')->get();
     $today = now()->timezone(config('app.timezone'))->toDateString();
     $todaySales = $sales->filter(fn ($sale) => ($sale['completedDate'] ?? $sale['date'] ?? '') === $today);
+    $todayExpenses = $expenses->filter(fn ($expense) => ($expense['date'] ?? '') === $today);
 
     return view('dashboard.admin', [
         'role' => $role,
@@ -156,6 +191,8 @@ Route::get('/dashboard/{role}', function (string $role) {
         'todayRevenue' => $todaySales->sum(fn ($sale) => (float) ($sale['total'] ?? 0)),
         'todayTransactions' => $todaySales->count(),
         'totalRevenue' => $sales->sum(fn ($sale) => (float) ($sale['total'] ?? 0)),
+        'todayExpenses' => $todayExpenses->sum(fn ($expense) => (float) ($expense['amount'] ?? 0)),
+        'totalExpenses' => $expenses->sum(fn ($expense) => (float) ($expense['amount'] ?? 0)),
     ]);
 });
 
@@ -173,8 +210,8 @@ Route::get('/estimation', function (Request $request) {
 });
 
 Route::get('/orders', function () {
-    if (! userHasRole(['cashier', 'chef', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+    if (! userHasRole(['cashier', 'chef', 'admin', 'superadmin', 'manager'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     return response()->json(readCoolCafeOrders());
@@ -216,8 +253,8 @@ Route::post('/orders', function (Request $request) {
 });
 
 Route::post('/orders/{id}/complete', function ($id) {
-    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+    if (! userHasRole(['cashier', 'admin', 'superadmin', 'manager'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $orders = readCoolCafeOrders();
@@ -246,8 +283,8 @@ Route::post('/orders/{id}/complete', function ($id) {
 });
 
 Route::post('/orders/{id}/ready', function ($id) {
-    if (! userHasRole(['chef', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+    if (! userHasRole(['chef', 'admin', 'superadmin', 'manager'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $orders = readCoolCafeOrders();
@@ -270,8 +307,8 @@ Route::post('/orders/{id}/ready', function ($id) {
 });
 
 Route::delete('/orders/{id}', function ($id) {
-    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+    if (! userHasRole(['cashier', 'admin', 'superadmin', 'manager'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $orders = collect(readCoolCafeOrders())
@@ -285,8 +322,8 @@ Route::delete('/orders/{id}', function ($id) {
 });
 
 Route::delete('/orders', function () {
-    if (! userHasRole(['cashier', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+    if (! userHasRole(['cashier', 'admin', 'superadmin', 'manager'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode([], JSON_PRETTY_PRINT));
@@ -294,50 +331,26 @@ Route::delete('/orders', function () {
     return response()->json(['ok' => true]);
 });
 
-Route::get('/sales-report', function (Request $request) {
-    if (! userHasRole(['manager', 'cashier', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+Route::get('/admin/management/users/admin', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.users.admins');
+});
+
+Route::get('/admin/management/users/chef', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.users.chefs');
+});
+
+Route::get('/admin/management/users/cashier', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.users.cashiers');
+});
+
+Route::get('/admin/management/ingredients', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        abort(403);
     }
-
-    $date = $request->query('date', now()->timezone(config('app.timezone'))->toDateString());
-    $sales = collect(readCoolCafeSales())
-        ->filter(fn ($sale) => ($sale['completedDate'] ?? $sale['date'] ?? '') === $date)
-        ->values();
-
-    $paymentSummary = $sales
-        ->groupBy(fn ($sale) => $sale['payment'] ?? 'Lainnya')
-        ->map(fn ($rows) => [
-            'count' => $rows->count(),
-            'total' => $rows->sum(fn ($sale) => (float) ($sale['total'] ?? 0)),
-        ])
-        ->all();
-
-    $itemSummary = $sales
-        ->flatMap(fn ($sale) => collect($sale['items'] ?? [])->map(fn ($item) => [
-            'name' => $item['name'] ?? 'Item',
-            'quantity' => (int) ($item['quantity'] ?? 0),
-            'total' => (float) ($item['price'] ?? 0) * (int) ($item['quantity'] ?? 0),
-        ]))
-        ->groupBy('name')
-        ->map(fn ($rows, $name) => [
-            'name' => $name,
-            'quantity' => $rows->sum('quantity'),
-            'total' => $rows->sum('total'),
-        ])
-        ->sortByDesc('quantity')
-        ->values()
-        ->take(5)
-        ->all();
-
-    return response()->json([
-        'date' => $date,
-        'transactions' => $sales->count(),
-        'revenue' => $sales->sum(fn ($sale) => (float) ($sale['total'] ?? 0)),
-        'averageTransaction' => $sales->count() ? round($sales->sum(fn ($sale) => (float) ($sale['total'] ?? 0)) / $sales->count()) : 0,
-        'paymentSummary' => $paymentSummary,
-        'topItems' => $itemSummary,
-        'sales' => $sales->sortByDesc(fn ($sale) => $sale['completedAt'] ?? $sale['time'] ?? '')->values()->all(),
-    ]);
+    return view('dashboard.ingredients');
 });
 
 Route::get('/admin/management/menus', function () {
@@ -347,9 +360,68 @@ Route::get('/admin/management/menus', function () {
     return view('dashboard.menus');
 });
 
+Route::get('/admin/management/reports', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        abort(403);
+    }
+    return view('dashboard.reports');
+});
+
+Route::get('/admin/ingredients', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin', 'chef'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    return response()->json(readCoolCafeIngredients());
+});
+
+Route::post('/admin/ingredients', function (Request $request) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'stock' => ['required', 'integer', 'min:0'],
+        'unit' => ['required', 'string', 'max:50'],
+    ]);
+    
+    $ingredients = readCoolCafeIngredients();
+    $data['id'] = now()->timestamp;
+    $ingredients[] = $data;
+    Storage::disk('local')->put('coolcafe_ingredients.json', json_encode($ingredients, JSON_PRETTY_PRINT));
+    
+    return response()->json($data);
+});
+
+Route::put('/admin/ingredients/{id}', function (Request $request, $id) {
+    if (! userHasRole(['manager', 'admin', 'superadmin', 'chef'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $ingredients = readCoolCafeIngredients();
+    $found = false;
+    foreach ($ingredients as &$ingredient) {
+        if ((string)($ingredient['id'] ?? '') === (string)$id) {
+            $ingredient['stock'] = $request->input('stock');
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) return response()->json(['message' => 'Not found'], 404);
+    Storage::disk('local')->put('coolcafe_ingredients.json', json_encode($ingredients, JSON_PRETTY_PRINT));
+    return response()->json(['ok' => true]);
+});
+
+Route::delete('/admin/ingredients/{id}', function ($id) {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $ingredients = collect(readCoolCafeIngredients())->reject(fn($i) => (string)($i['id'] ?? '') === (string)$id)->values()->all();
+    Storage::disk('local')->put('coolcafe_ingredients.json', json_encode($ingredients, JSON_PRETTY_PRINT));
+    return response()->json(['ok' => true]);
+});
+
 Route::get('/admin/menus', function () {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     return response()->json(App\Models\Menu::all());
@@ -357,7 +429,7 @@ Route::get('/admin/menus', function () {
 
 Route::post('/admin/menus', function (Request $request) {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $data = $request->validate([
@@ -365,7 +437,7 @@ Route::post('/admin/menus', function (Request $request) {
         'category' => ['required', 'string', 'max:255'],
         'price' => ['required', 'numeric', 'min:0'],
         'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string', 'url'],
+        'image' => ['nullable', 'string'],
         'add_ons' => ['nullable', 'array'],
         'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
         'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
@@ -379,7 +451,7 @@ Route::post('/admin/menus', function (Request $request) {
 
 Route::put('/admin/menus/{id}', function (Request $request, $id) {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $menu = App\Models\Menu::findOrFail($id);
@@ -389,7 +461,7 @@ Route::put('/admin/menus/{id}', function (Request $request, $id) {
         'category' => ['required', 'string', 'max:255'],
         'price' => ['required', 'numeric', 'min:0'],
         'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string', 'url'],
+        'image' => ['nullable', 'string'],
         'add_ons' => ['nullable', 'array'],
         'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
         'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
@@ -403,7 +475,7 @@ Route::put('/admin/menus/{id}', function (Request $request, $id) {
 
 Route::delete('/admin/menus/{id}', function ($id) {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Unauthenticated.'], 401);
+        return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     $menu = App\Models\Menu::findOrFail($id);
@@ -447,4 +519,26 @@ function readCoolCafeSales(): array
     $sales = json_decode(Storage::disk('local')->get('coolcafe_sales.json'), true);
 
     return is_array($sales) ? $sales : [];
+}
+
+function readCoolCafeIngredients(): array
+{
+    if (! Storage::disk('local')->exists('coolcafe_ingredients.json')) {
+        return [];
+    }
+
+    $ingredients = json_decode(Storage::disk('local')->get('coolcafe_ingredients.json'), true);
+
+    return is_array($ingredients) ? $ingredients : [];
+}
+
+function readCoolCafeExpenses(): array
+{
+    if (! Storage::disk('local')->exists('coolcafe_expenses.json')) {
+        return [];
+    }
+
+    $expenses = json_decode(Storage::disk('local')->get('coolcafe_expenses.json'), true);
+
+    return is_array($expenses) ? $expenses : [];
 }

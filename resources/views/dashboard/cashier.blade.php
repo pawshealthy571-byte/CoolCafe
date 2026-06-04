@@ -63,25 +63,18 @@
 @endpush
 
 @section('content')
-<div id="toast" class="toast">
-    <div class="flex items-start gap-3">
-        <i class="fas fa-check-circle text-green-500 mt-1"></i>
-        <p id="toast-message" class="text-sm font-semibold"></p>
-    </div>
-</div>
-
-<div id="confirm-modal" class="confirm-backdrop">
+<div id="confirm-modal-local" class="confirm-backdrop">
     <div class="confirm-box p-6">
         <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center mb-4">
             <i class="fas fa-triangle-exclamation text-xl"></i>
         </div>
-        <h3 id="confirm-title" class="text-lg font-bold text-gray-800 mb-2">Konfirmasi</h3>
-        <p id="confirm-message" class="text-sm text-gray-500 mb-5"></p>
+        <h3 id="confirm-title-local" class="text-lg font-bold text-gray-800 mb-2">Konfirmasi</h3>
+        <p id="confirm-message-local" class="text-sm text-gray-500 mb-5"></p>
         <div class="grid grid-cols-2 gap-3">
-            <button id="confirm-cancel" type="button" class="bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold text-sm">
+            <button id="confirm-cancel-local" type="button" class="bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold text-sm">
                 Batal
             </button>
-            <button id="confirm-ok" type="button" class="bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">
+            <button id="confirm-ok-local" type="button" class="bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">
                 Hapus
             </button>
         </div>
@@ -123,51 +116,63 @@
 
 <section id="report-section" class="hidden">
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-2">
-            <input type="date" id="report-date" class="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-coffee">
-            <button onclick="loadReport()" class="btn-primary !text-xs">
-                <i class="fas fa-filter mr-2"></i>Filter
+        <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+            <input type="date" id="report-date" class="bg-transparent border-none px-4 py-2 text-sm font-bold text-gray-700 outline-none">
+            <button onclick="loadReport()" class="bg-coffee text-white w-10 h-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                <i class="fas fa-filter text-xs"></i>
             </button>
         </div>
-        @if (in_array(Auth::user()->role, ['admin', 'superadmin'], true))
-            <button onclick="clearSalesReport()" class="text-red-500 bg-red-50 px-4 py-2 rounded-xl font-bold text-xs hover:bg-red-100 transition-colors">
-                <i class="fas fa-rotate-left mr-2"></i>Reset Laporan
+        @if (in_array(Auth::user()->role, ['admin', 'superadmin', 'manager'], true))
+            <button onclick="clearSalesReport()" class="text-red-500 bg-red-50 px-5 py-3 rounded-2xl font-bold text-xs hover:bg-red-100 transition-all flex items-center gap-2">
+                <i class="fas fa-rotate-left"></i> Reset Laporan
             </button>
         @endif
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div class="card border-l-4 border-l-coffee">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Omzet</p>
-            <p id="report-revenue" class="text-2xl font-bold text-coffee mt-2">Rp 0</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="card !bg-coffee text-white overflow-hidden relative border-none">
+            <div class="relative z-10">
+                <p class="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] mb-1">Total Omzet</p>
+                <h3 id="report-revenue" class="text-3xl font-bold italic">Rp 0</h3>
+            </div>
+            <i class="fas fa-wallet absolute -bottom-4 -right-4 text-8xl text-white/5 rotate-12"></i>
         </div>
-        <div class="card">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Transaksi</p>
-            <p id="report-transactions" class="text-2xl font-bold text-gray-800 mt-2">0</p>
+        <div class="card border-b-4 border-b-blue-500">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Transaksi</p>
+            <h3 id="report-transactions" class="text-3xl font-bold text-gray-800">0</h3>
         </div>
-        <div class="card">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rata-rata</p>
-            <p id="report-average" class="text-2xl font-bold text-gray-800 mt-2">Rp 0</p>
+        <div class="card border-b-4 border-b-amber-500">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Rata-rata</p>
+            <h3 id="report-average" class="text-3xl font-bold text-gray-800">Rp 0</h3>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="card !p-0 overflow-hidden">
-            <div class="p-5 border-b border-gray-50">
+            <div class="p-6 border-b border-gray-50 flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-credit-card"></i>
+                </div>
                 <h3 class="font-bold text-gray-800">Metode Pembayaran</h3>
             </div>
-            <div id="payment-summary" class="p-5 space-y-3"></div>
+            <div id="payment-summary" class="p-6 space-y-4"></div>
         </div>
         <div class="card !p-0 overflow-hidden">
-            <div class="p-5 border-b border-gray-50">
+            <div class="p-6 border-b border-gray-50 flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-fire"></i>
+                </div>
                 <h3 class="font-bold text-gray-800">Item Terlaris</h3>
             </div>
-            <div id="top-items" class="p-5 space-y-3"></div>
+            <div id="top-items" class="p-6 space-y-4"></div>
         </div>
     </div>
 
     <div class="card !p-0 overflow-hidden">
-        <div class="p-5 border-b border-gray-50">
+        <div class="p-6 border-b border-gray-50 flex items-center gap-3">
+            <div class="w-10 h-10 bg-gray-100 text-gray-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-history"></i>
+            </div>
             <h3 class="font-bold text-gray-800">Riwayat Transaksi</h3>
         </div>
         <div class="overflow-x-auto">
@@ -176,8 +181,8 @@
                     <tr>
                         <th class="text-left px-6 py-4">Waktu</th>
                         <th class="text-left px-6 py-4">Meja</th>
-                        <th class="text-left px-6 py-4">Pembayaran</th>
-                        <th class="text-left px-6 py-4">Item</th>
+                        <th class="text-left px-6 py-4">Metode</th>
+                        <th class="text-left px-6 py-4">Item Terjual</th>
                         <th class="text-right px-6 py-4">Total</th>
                     </tr>
                 </thead>
@@ -191,47 +196,6 @@
 @push('scripts')
 <script>
     let activeSection = 'orders';
-    let toastTimer = null;
-
-    function showConfirm({ title = 'Konfirmasi', message = '', okText = 'Hapus', cancelText = 'Batal' }) {
-        const modal = document.getElementById('confirm-modal');
-        document.getElementById('confirm-title').innerText = title;
-        document.getElementById('confirm-message').innerText = message;
-        document.getElementById('confirm-ok').innerText = okText;
-        document.getElementById('confirm-cancel').innerText = cancelText;
-        modal.classList.add('show');
-
-        return new Promise((resolve) => {
-            const okButton = document.getElementById('confirm-ok');
-            const cancelButton = document.getElementById('confirm-cancel');
-
-            const close = (result) => {
-                modal.classList.remove('show');
-                okButton.removeEventListener('click', onOk);
-                cancelButton.removeEventListener('click', onCancel);
-                modal.removeEventListener('click', onBackdrop);
-                resolve(result);
-            };
-            const onOk = () => close(true);
-            const onCancel = () => close(false);
-            const onBackdrop = (event) => {
-                if (event.target === modal) close(false);
-            };
-
-            okButton.addEventListener('click', onOk);
-            cancelButton.addEventListener('click', onCancel);
-            modal.addEventListener('click', onBackdrop);
-        });
-    }
-
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        document.getElementById('toast-message').innerText = message;
-
-        clearTimeout(toastTimer);
-        toast.classList.add('show');
-        toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
-    }
 
     function formatRupiah(value) {
         return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
@@ -243,7 +207,7 @@
         document.getElementById('report-section').classList.toggle('hidden', section !== 'report');
         
         const title = section === 'orders' ? 'Pesanan Masuk' : 'Laporan Keuangan';
-        const desc = section === 'orders' ? 'Monitor pesanan pelanggan secara real-time.' : 'Ringkasan transaksi yang sudah diselesaikan kasir.';
+        const desc = section === 'orders' ? 'Monitor pesanan pelanggan secara real-time.' : 'Ringkasan transaksi yang sudah diselesaikan hari ini.';
         
         document.getElementById('section-title').innerText = title;
         document.getElementById('section-desc').innerText = desc;
@@ -355,14 +319,14 @@
                                         <p class="text-[9px] font-bold text-gray-400 uppercase">Total Tagihan</p>
                                         <p class="text-lg font-bold text-coffee leading-none">${formatRupiah(order.total)}</p>
                                     </div>
-                                    <p class="text-[9px] text-gray-400">Via: <span class="text-gray-600 font-bold">${order.payment}</span></p>
+                                    <p class="text-[9px] text-gray-400">Via: <span class="text-gray-600 font-bold uppercase">${order.payment}</span></p>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="deleteOrder('${order.id}')" class="bg-red-50 text-red-500 py-2.5 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all">
+                                <button onclick="deleteOrder('${order.id}')" class="bg-red-50 text-red-500 py-3 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all">
                                     <i class="fas fa-trash-can mr-1"></i> Batal
                                 </button>
-                                <button onclick="completeOrder('${order.id}')" class="bg-coffee text-white py-2.5 rounded-xl font-bold text-xs hover:bg-opacity-90 transition-all shadow-md shadow-coffee/10">
+                                <button onclick="completeOrder('${order.id}')" class="bg-coffee text-white py-3 rounded-xl font-bold text-xs hover:bg-opacity-90 transition-all shadow-md shadow-coffee/10">
                                     <i class="fas fa-check mr-2"></i> Selesai
                                 </button>
                             </div>
@@ -384,14 +348,10 @@
         try {
             const response = await fetch(`/sales-report?date=${dateInput.value}`, { headers: { 'Accept': 'application/json' } });
             const report = await response.json();
-            const currentReportJson = JSON.stringify({ revenue: report.revenue, tx: report.transactions, sales: (report.sales || []).length });
-
-            if (currentReportJson === lastReportJson) return;
-            lastReportJson = currentReportJson;
-
+            
             document.getElementById('report-revenue').innerText = formatRupiah(report.revenue);
             document.getElementById('report-transactions').innerText = report.transactions;
-            document.getElementById('report-average').innerText = formatRupiah(report.averageTransaction);
+            document.getElementById('report-average').innerText = formatRupiah(report.averageTransaction || (report.revenue / (report.transactions || 1)));
 
             const paymentSummary = document.getElementById('payment-summary');
             const paymentEntries = Object.entries(report.paymentSummary || {});
@@ -401,7 +361,7 @@
                 row.className = 'flex justify-between items-center bg-gray-50 rounded-2xl px-5 py-4';
                 row.innerHTML = `
                     <div>
-                        <p class="font-bold text-gray-800 text-xs">${method}</p>
+                        <p class="font-bold text-gray-800 text-xs uppercase">${method}</p>
                         <p class="text-[10px] text-gray-400">${data.count} transaksi</p>
                     </div>
                     <p class="font-bold text-coffee text-sm">${formatRupiah(data.total)}</p>
@@ -410,8 +370,9 @@
             });
 
             const topItems = document.getElementById('top-items');
-            topItems.innerHTML = report.topItems.length ? '' : '<p class="text-xs text-gray-400 py-4 text-center">Belum ada data.</p>';
-            report.topItems.forEach((item, index) => {
+            const items = report.topItems || [];
+            topItems.innerHTML = items.length ? '' : '<p class="text-xs text-gray-400 py-4 text-center">Belum ada data.</p>';
+            items.forEach((item, index) => {
                 const row = document.createElement('div');
                 row.className = 'flex justify-between items-center bg-gray-50 rounded-2xl px-5 py-4';
                 row.innerHTML = `
@@ -435,13 +396,13 @@
             `;
             (report.sales || []).forEach((sale) => {
                 const row = document.createElement('tr');
-                const items = (sale.items || []).map(item => `${item.name} x${item.quantity}`).join(', ');
+                const itemsStr = (sale.items || []).map(item => `${item.name} x${item.quantity}`).join(', ');
                 row.className = 'hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
-                    <td class="px-6 py-4 text-gray-500 text-xs">${sale.completedTime || sale.time || '-'}</td>
+                    <td class="px-6 py-4 text-gray-500 text-xs font-medium">${sale.completedTime || sale.time || '-'}</td>
                     <td class="px-6 py-4 font-bold text-gray-800 text-xs">Meja ${sale.table}</td>
-                    <td class="px-6 py-4 text-gray-600 text-xs">${sale.payment}</td>
-                    <td class="px-6 py-4 text-gray-500 text-xs min-w-[200px]">${items}</td>
+                    <td class="px-6 py-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[9px] font-bold uppercase">${sale.payment}</span></td>
+                    <td class="px-6 py-4 text-gray-400 text-[10px] min-w-[200px] italic">${itemsStr}</td>
                     <td class="px-6 py-4 text-right font-bold text-coffee text-sm">${formatRupiah(sale.total)}</td>
                 `;
                 salesTable.appendChild(row);
@@ -456,7 +417,6 @@
             const addOns = (options.addOns || []).map(addOn => addOn.name).join(', ');
             return `${addOns ? 'Add-on: ' + addOns : 'Tanpa add-on'}${options.note ? ', ' + options.note : ''}`;
         }
-
         return `${options.sweetness || ''}${options.note ? ', ' + options.note : ''}`;
     }
 
@@ -468,7 +428,7 @@
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             }
         });
-        showToast('Pesanan diselesaikan!');
+        window.showToast('Pesanan berhasil diselesaikan!');
         loadOrders();
         if (activeSection === 'report') {
             loadReport();
@@ -476,32 +436,33 @@
     }
 
     async function deleteOrder(id) {
-        if (await showConfirm({
-            title: 'Batalkan pesanan?',
-            message: 'Pesanan akan dihapus permanen.',
-            okText: 'Ya, Batalkan'
-        })) {
-            await deleteOrderById(id);
+        const confirmed = await window.showConfirm({
+            title: 'Batalkan Pesanan?',
+            message: 'Pesanan meja ini akan dihapus permanen. Lanjutkan?',
+            okText: 'YA, BATALKAN'
+        });
+
+        if (confirmed) {
+            await fetch(`/orders/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            window.showToast('Pesanan telah dibatalkan.');
+            loadOrders();
         }
     }
 
-    async function deleteOrderById(id) {
-        await fetch(`/orders/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        });
-        loadOrders();
-    }
-
     async function clearAllOrders() {
-        if (await showConfirm({
-            title: 'Hapus semua?',
-            message: 'Semua pesanan aktif akan dihapus.',
-            okText: 'Hapus Semua'
-        })) {
+        const confirmed = await window.showConfirm({
+            title: 'Hapus Semua?',
+            message: 'Semua pesanan yang ada di daftar akan dihapus permanen. Lanjutkan?',
+            okText: 'HAPUS SEMUA'
+        });
+
+        if (confirmed) {
             await fetch('/orders', {
                 method: 'DELETE',
                 headers: {
@@ -509,7 +470,28 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
             });
+            window.showToast('Seluruh pesanan telah dibersihkan.');
             loadOrders();
+        }
+    }
+
+    async function clearSalesReport() {
+        const confirmed = await window.showConfirm({
+            title: 'Reset Laporan?',
+            message: 'Seluruh riwayat transaksi akan dihapus permanen. Tindakan ini tidak dapat dibatalkan!',
+            okText: 'YA, RESET SEMUA'
+        });
+
+        if (confirmed) {
+            await fetch('/sales-report', {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            window.showToast('Laporan keuangan telah direset.');
+            loadReport();
         }
     }
 
@@ -524,3 +506,4 @@
     }, 5000);
 </script>
 @endpush
+@endsection

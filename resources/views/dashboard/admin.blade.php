@@ -11,7 +11,7 @@
 </div>
 
 <div id="stats-section">
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <div class="card">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
@@ -59,79 +59,62 @@
             </div>
         </div>
     </div>
-</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <section class="lg:col-span-2">
-        <div class="card !p-0 overflow-hidden">
-            <div class="p-5 border-b border-gray-50 flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-gray-800">Akses Cepat Dashboard</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Menu kerja sesuai role akun Anda.</p>
-                </div>
+    <div class="card border-l-4 border-l-red-500">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-arrow-down text-xl"></i>
             </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                @if (in_array($role, ['manager', 'admin', 'superadmin'], true))
-                    <div class="group border border-gray-100 rounded-2xl p-5 hover:border-coffee/30 hover:bg-coffee/[0.02] transition-all cursor-pointer">
-                        <div class="w-12 h-12 bg-coffee/10 text-coffee rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-chart-line text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-800">Laporan Manager</h3>
-                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">Pantau omzet, transaksi, dan item terlaris dengan detail mendalam.</p>
-                    </div>
-                @endif
-
-                @if (in_array($role, ['admin', 'superadmin'], true))
-                    <div class="group border border-gray-100 rounded-2xl p-5 hover:border-coffee/30 hover:bg-coffee/[0.02] transition-all cursor-pointer">
-                        <div class="w-12 h-12 bg-coffee/10 text-coffee rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-sliders text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-800">Manajemen Toko</h3>
-                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">Area operasional untuk pengaturan data toko, menu, dan staff.</p>
-                    </div>
-                @endif
-
-                @if ($role === 'superadmin')
-                    <div class="group border border-gray-100 rounded-2xl p-5 hover:border-coffee/30 hover:bg-coffee/[0.02] transition-all cursor-pointer md:col-span-2">
-                        <div class="w-12 h-12 bg-coffee/10 text-coffee rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-shield-halved text-xl"></i>
-                        </div>
-                        <h3 class="font-bold text-gray-800">Sistem Superadmin</h3>
-                        <p class="text-xs text-gray-500 mt-2 leading-relaxed">Akses penuh ke semua kontrol sistem, role, dan backup data keamanan.</p>
-                    </div>
-                @endif
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Pengeluaran</p>
+                <p class="text-2xl font-bold text-red-600">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</p>
             </div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <section>
-        <div class="card !p-0 overflow-hidden">
-            <div class="p-5 border-b border-gray-50">
-                <h3 class="font-bold text-gray-800">Daftar Staff</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Akun demo staff yang tersedia.</p>
-            </div>
-            <div class="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
-                @foreach ($users as $staff)
-                    <div class="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                        <div class="w-10 h-10 rounded-full bg-coffee/10 flex items-center justify-center text-coffee font-bold text-sm">
-                            {{ strtoupper(substr($staff->name, 0, 1)) }}
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-bold text-xs text-gray-800">{{ $staff->name }}</p>
-                            <p class="text-[10px] text-gray-400">{{ $staff->email }}</p>
-                        </div>
-                        <span class="text-[8px] uppercase tracking-widest px-2 py-1 rounded-lg font-bold
-                            @if($staff->role === 'superadmin') bg-purple-100 text-purple-600
-                            @elseif($staff->role === 'admin') bg-blue-100 text-blue-600
-                            @elseif($staff->role === 'manager') bg-green-100 text-green-600
-                            @else bg-gray-100 text-gray-600 @endif">
-                            {{ $staff->role }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <section class="card">
+        <h3 class="font-bold text-gray-800 mb-4">Grafik Omzet Mingguan</h3>
+        <canvas id="revenueChart"></canvas>
+    </section>
+    <section class="card">
+        <h3 class="font-bold text-gray-800 mb-4">Stok Bahan Baku Rendah</h3>
+        <div id="low-stock-list" class="space-y-2">
+            <!-- Low stock items -->
         </div>
     </section>
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize charts and load data
+    async function initDashboard() {
+        // Mock chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                datasets: [{
+                    label: 'Omzet',
+                    data: [120000, 190000, 300000, 500000, 200000, 300000, 400000],
+                    borderColor: '#634832',
+                    tension: 0.4
+                }]
+            }
+        });
+
+        // Load low stock
+        const resp = await fetch('/admin/ingredients');
+        const ingredients = await resp.json();
+        const lowStock = ingredients.filter(i => i.stock < 10);
+        const list = document.getElementById('low-stock-list');
+        list.innerHTML = lowStock.length ? lowStock.map(i => `<div class="p-2 bg-red-50 text-red-600 rounded text-xs font-bold">${i.name}: ${i.stock} ${i.unit}</div>`).join('') : '<p class="text-xs text-gray-400">Semua stok aman.</p>';
+    }
+    initDashboard();
+</script>
+@endpush
 </div>
 @endsection
