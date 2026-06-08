@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -6,6 +7,113 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    --color-coffee-50: #faf7f2;
+    --color-coffee-100: #f4eee3;
+    --color-coffee-200: #e8dcc4;
+    --color-coffee-300: #d6be9a;
+    --color-coffee-400: #c19f72;
+    --color-coffee-500: #a77c4d;
+    --color-coffee-600: #8c6037;
+    --color-coffee-700: #6f4727;
+    --color-coffee-800: #58351b;
+    --color-coffee-900: #442612;
+    --color-coffee-950: #251206;
+
+    --color-coffee: #6f4727;
+    --color-coffee-dark: #442612;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: #faf7f2 !important;
+    background-image: radial-gradient(#6f47270a 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
+    color: #2e2219;
+}
+
+/* Animations */
+@keyframes steam {
+    0% { transform: translateY(0) scale(0.9) rotate(0deg); opacity: 0; }
+    15% { opacity: 0.5; }
+    50% { transform: translateY(-15px) scale(1.1) rotate(8deg); opacity: 0.3; }
+    100% { transform: translateY(-30px) scale(1.3) rotate(-8deg); opacity: 0; }
+}
+
+@keyframes scan {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(220px); }
+}
+
+.animate-steam-1 {
+    animation: steam 3s ease-in-out infinite;
+}
+.animate-steam-2 {
+    animation: steam 3.5s ease-in-out infinite 0.7s;
+}
+.animate-steam-3 {
+    animation: steam 4s ease-in-out infinite 1.4s;
+}
+
+.animate-scan {
+    animation: scan 3s ease-in-out infinite;
+}
+
+@layer components {
+    .font-serif {
+        font-family: var(--font-serif);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #6f4727 0%, #8c6037 100%) !important;
+        @apply text-white px-5 py-3 rounded-2xl font-bold transition-all shadow-md cursor-pointer border border-[#6f4727]/10;
+        box-shadow: 0 4px 14px rgba(111, 71, 39, 0.2) !important;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #58351b 0%, #6f4727 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 20px rgba(111, 71, 39, 0.3) !important;
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0) !important;
+    }
+    
+    .card {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(12px) !important;
+        @apply rounded-3xl p-5 border;
+        border-color: rgba(111, 71, 39, 0.06) !important;
+        box-shadow: 0 10px 25px -5px rgba(111, 71, 39, 0.03), 0 8px 16px -6px rgba(111, 71, 39, 0.02) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .card:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 20px 35px -8px rgba(111, 71, 39, 0.08), 0 10px 20px -6px rgba(111, 71, 39, 0.04) !important;
+        border-color: rgba(111, 71, 39, 0.12) !important;
+    }
+
+    .category-pill {
+        @apply whitespace-nowrap px-6 py-2.5 rounded-full border border-coffee-200 text-sm font-semibold text-coffee-700 bg-white/70 transition-all hover:bg-white hover:border-coffee-400 cursor-pointer;
+    }
+
+    .category-pill.active {
+        @apply bg-coffee-700 text-white border-coffee-700 shadow-sm shadow-coffee-700/20;
+    }
+
+    .toast {
+        @apply fixed left-1/2 top-5 z-[200] w-[calc(100%-32px)] max-w-[380px] p-4 rounded-2xl bg-white text-gray-800 shadow-xl border-l-[6px] border-coffee -translate-x-1/2 -translate-y-4 opacity-0 pointer-events-none transition-all duration-300;
+    }
+
+    .toast.show {
+        @apply opacity-100 translate-y-0;
+    }
+
+    .toast.error {
+        @apply border-red-500;
+    }
 }

@@ -12,6 +12,7 @@ class Menu extends Model
         'price',
         'description',
         'image',
+        'barcode',
         'add_ons',
         'is_available',
     ];

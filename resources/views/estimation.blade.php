@@ -4,100 +4,141 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CoolCafe - Estimasi Pesanan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f5f2;
+        /* CSS animated coffee cup steam styling */
+        .steam-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 2px;
+            height: 30px;
         }
-        .loader-ring {
-            display: inline-block;
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-        .loader-ring div {
-            box-sizing: border-box;
-            display: block;
-            position: absolute;
-            width: 64px;
-            height: 64px;
-            margin: 8px;
-            border: 8px solid #634832;
+        .steam-line {
+            width: 3px;
+            height: 20px;
+            background: rgba(111, 71, 39, 0.4);
             border-radius: 50%;
-            animation: loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            border-color: #634832 transparent transparent transparent;
         }
-        .loader-ring div:nth-child(1) { animation-delay: -0.45s; }
-        .loader-ring div:nth-child(2) { animation-delay: -0.3s; }
-        .loader-ring div:nth-child(3) { animation-delay: -0.15s; }
-        @keyframes loader-ring {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .coffee-cup {
+            position: relative;
+            width: 60px;
+            height: 48px;
+            background: linear-gradient(135deg, #6f4727 0%, #58351b 100%);
+            border-radius: 0 0 24px 24px;
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(111, 71, 39, 0.15);
+            margin: 0 auto;
+        }
+        .cup-handle {
+            position: absolute;
+            right: -10px;
+            top: 10px;
+            width: 14px;
+            height: 24px;
+            border: 3.5px solid #6f4727;
+            border-left: 0;
+            border-radius: 0 10px 10px 0;
+        }
+        .saucer {
+            width: 80px;
+            height: 5px;
+            background: #ab8158;
+            border-radius: 50%;
+            margin: 4px auto 0;
+            box-shadow: 0 2px 4px rgba(111, 71, 39, 0.1);
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 text-center">
-    <div class="max-w-md w-full">
-        <div class="mb-8">
-            <div class="loader-ring"><div></div><div></div><div></div><div></div></div>
+<body class="min-h-screen bg-coffee-50 flex items-center justify-center p-6 text-center antialiased">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Interactive Barista Steam Loader -->
+        <div class="flex flex-col items-center justify-center">
+            <div class="steam-container">
+                <div class="steam-line animate-steam-1"></div>
+                <div class="steam-line animate-steam-2"></div>
+                <div class="steam-line animate-steam-3"></div>
+            </div>
+            <div class="coffee-cup">
+                <div class="cup-handle"></div>
+            </div>
+            <div class="saucer"></div>
         </div>
         
-        <h1 class="text-2xl font-bold text-[#634832] mb-2">Pesanan Diterima!</h1>
-        <p class="text-gray-500 mb-8">Mohon tunggu sebentar, dapur kami sedang menyiapkan pesanan terbaik untuk Anda.</p>
+        <div class="space-y-2">
+            <h1 class="font-serif text-3xl font-bold text-coffee-950">Pesanan Diterima!</h1>
+            <p class="text-xs text-coffee-700 max-w-sm mx-auto leading-relaxed">Terima kasih atas pesanan Anda. Tim barista dan chef kami sedang menyiapkan sajian terbaik untuk Anda.</p>
+        </div>
         
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <div class="text-left">
-                    <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Meja</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $table }}</p>
+        <!-- Live Status Stepper Card -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-coffee-950/5 text-left space-y-6">
+            <!-- Table & Time Info -->
+            <div class="flex justify-between items-center pb-4 border-b border-coffee-100">
+                <div>
+                    <span class="text-[9px] uppercase tracking-wider text-coffee-600 font-bold block">Nomor Meja</span>
+                    <span class="text-lg font-bold text-coffee-950">Meja {{ $table }}</span>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Waktu Estimasi</p>
-                    <p class="text-xl font-bold text-[#634832]">10 - 15 Menit</p>
+                    <span class="text-[9px] uppercase tracking-wider text-coffee-600 font-bold block">Estimasi Tunggu</span>
+                    <span class="text-lg font-serif font-bold text-coffee-800">10 - 15 Menit</span>
                 </div>
             </div>
             
-            <div class="space-y-4">
-                <div class="flex items-center gap-4 text-left">
-                    <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center flex-shrink-0">
+            <!-- Process steps -->
+            <div class="relative pl-8 space-y-6 before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-coffee-100">
+                <!-- Step 1: Active/Done -->
+                <div class="relative flex items-start gap-4">
+                    <div class="absolute -left-8 w-7 h-7 rounded-full bg-emerald-50 border border-emerald-250 text-emerald-500 flex items-center justify-center text-[10px] z-10">
                         <i class="fas fa-check"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-800">Pesanan Masuk</p>
-                        <p class="text-xs text-gray-400">Sudah terkirim ke sistem kasir</p>
+                        <h3 class="text-xs font-bold text-coffee-950">Pesanan Masuk</h3>
+                        <p class="text-[10px] text-coffee-600">Pesanan telah tercatat di kasir & printer dapur.</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 text-left">
-                    <div class="w-10 h-10 rounded-full bg-[#634832]/10 text-[#634832] flex items-center justify-center flex-shrink-0 animate-pulse">
+                
+                <!-- Step 2: Preparing -->
+                <div class="relative flex items-start gap-4">
+                    <div class="absolute -left-8 w-7 h-7 rounded-full bg-coffee-100 border border-coffee-250 text-coffee-700 flex items-center justify-center text-[10px] z-10 animate-pulse">
                         <i class="fas fa-fire-burner"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-800">Sedang Disiapkan</p>
-                        <p class="text-xs text-gray-400">Chef sedang memproses pesanan Anda</p>
+                        <h3 class="text-xs font-bold text-coffee-950">Sedang Disiapkan</h3>
+                        <p class="text-[10px] text-coffee-600">Bahan segar sedang diproses untuk pesanan Anda.</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 text-left opacity-40">
-                    <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center flex-shrink-0">
+                
+                <!-- Step 3: Serve -->
+                <div class="relative flex items-start gap-4 opacity-40">
+                    <div class="absolute -left-8 w-7 h-7 rounded-full bg-coffee-50/50 border border-coffee-100 text-coffee-400 flex items-center justify-center text-[10px] z-10">
                         <i class="fas fa-concierge-bell"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-800">Siap Dihidangkan</p>
-                        <p class="text-xs text-gray-400">Pesanan akan segera diantar ke meja</p>
+                        <h3 class="text-xs font-bold text-coffee-950">Siap Dihidangkan</h3>
+                        <p class="text-[10px] text-coffee-600">Pelayan kami akan mengantarkan pesanan langsung ke meja.</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <a href="/menu" class="inline-block text-sm font-bold text-[#634832] hover:underline">
-            <i class="fas fa-arrow-left mr-2"></i>Kembali ke Menu
-        </a>
-        
-        <div class="mt-12">
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest">Terima kasih telah berkunjung ke</p>
-            <p class="text-sm font-bold text-[#634832] mt-1">CoolCafe</p>
+        <div class="pt-4 space-y-8">
+            <a href="/menu" class="inline-flex items-center gap-2 text-xs font-bold text-coffee-700 hover:text-coffee-900 transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span>Kembali ke Menu Utama</span>
+            </a>
+            
+            <div>
+                <p class="text-[9px] text-coffee-400 uppercase tracking-widest font-bold">Terima kasih atas kunjungan Anda</p>
+                <p class="font-serif text-sm font-bold text-coffee-700 mt-0.5">CoolCafe</p>
+            </div>
         </div>
     </div>
 </body>

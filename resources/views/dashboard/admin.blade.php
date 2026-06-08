@@ -11,62 +11,62 @@
 </div>
 
 <div id="stats-section">
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-    <div class="card">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+    <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center shrink-0">
                 <i class="fas fa-receipt text-xl"></i>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pesanan Aktif</p>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Pesanan Aktif</p>
                 <p class="text-2xl font-bold text-gray-800">{{ $activeOrders }}</p>
             </div>
         </div>
     </div>
 
-    <div class="card border-l-4 border-l-green-500">
+    <div class="card hover:shadow-md transition-shadow border-l-4 border-l-green-500">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center shrink-0">
                 <i class="fas fa-wallet text-xl"></i>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Omzet Hari Ini</p>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Omzet Hari Ini</p>
                 <p class="text-2xl font-bold text-coffee">Rp {{ number_format($todayRevenue, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>
 
-    <div class="card">
+    <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center shrink-0">
                 <i class="fas fa-exchange-alt text-xl"></i>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Transaksi</p>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Transaksi</p>
                 <p class="text-2xl font-bold text-gray-800">{{ $todayTransactions }}</p>
             </div>
         </div>
     </div>
 
-    <div class="card border-l-4 border-l-coffee">
+    <div class="card hover:shadow-md transition-shadow border-l-4 border-l-coffee">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-[#6348321a] text-coffee rounded-2xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-[#6348321a] text-coffee rounded-2xl flex items-center justify-center shrink-0">
                 <i class="fas fa-coins text-xl"></i>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Omzet</p>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Total Omzet</p>
                 <p class="text-2xl font-bold text-coffee">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>
 
-    <div class="card border-l-4 border-l-red-500">
+    <div class="card hover:shadow-md transition-shadow border-l-4 border-l-red-500">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+            <div class="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center shrink-0">
                 <i class="fas fa-arrow-down text-xl"></i>
             </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Pengeluaran</p>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Total Pengeluaran</p>
                 <p class="text-2xl font-bold text-red-600">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</p>
             </div>
         </div>

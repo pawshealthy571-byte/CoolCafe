@@ -19,24 +19,25 @@
         </div>
     </div>
 
-    <div class="flex overflow-x-auto gap-2 mb-4 pb-1">
-        <button type="button" onclick="filterMenuCategory('all')" data-menu-filter="all" class="menu-filter bg-coffee text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Semua</button>
-        <button type="button" onclick="filterMenuCategory('Paket')" data-menu-filter="Paket" class="menu-filter bg-white border border-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Paket</button>
-        <button type="button" onclick="filterMenuCategory('Bakery')" data-menu-filter="Bakery" class="menu-filter bg-white border border-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Bakery</button>
-        <button type="button" onclick="filterMenuCategory('Beverages')" data-menu-filter="Beverages" class="menu-filter bg-white border border-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Beverages</button>
-        <button type="button" onclick="filterMenuCategory('Main Course')" data-menu-filter="Main Course" class="menu-filter bg-white border border-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap">Main Course</button>
+    <div class="flex flex-wrap items-center gap-3 mb-6 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+        <button type="button" onclick="filterMenuCategory('all')" data-menu-filter="all" class="menu-filter bg-coffee text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Semua</button>
+        <button type="button" onclick="filterMenuCategory('Paket')" data-menu-filter="Paket" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Paket</button>
+        <button type="button" onclick="filterMenuCategory('Bakery')" data-menu-filter="Bakery" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Bakery</button>
+        <button type="button" onclick="filterMenuCategory('Minuman')" data-menu-filter="Minuman" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Minuman</button>
+        <button type="button" onclick="filterMenuCategory('Main Course')" data-menu-filter="Main Course" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Main Course</button>
     </div>
 
-    <div class="card !p-0 overflow-hidden mb-8">
+    <div class="card !p-0 overflow-hidden mb-8 border-none shadow-md">
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] tracking-widest font-bold">
                     <tr>
-                        <th class="text-left px-6 py-4">Menu</th>
-                        <th class="text-left px-6 py-4">Kategori</th>
-                        <th class="text-left px-6 py-4">Harga</th>
-                        <th class="text-left px-6 py-4">Status</th>
-                        <th class="text-right px-6 py-4">Aksi</th>
+                        <th class="text-left px-6 py-5">Menu</th>
+                        <th class="text-left px-6 py-5">Barcode</th>
+                        <th class="text-left px-6 py-5">Kategori</th>
+                        <th class="text-left px-6 py-5">Harga</th>
+                        <th class="text-left px-6 py-5">Status</th>
+                        <th class="text-right px-6 py-5">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="menu-table-body" class="divide-y divide-gray-50">
@@ -65,7 +66,7 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kategori</label>
                 <select id="menu-category" required onchange="toggleAddOnField()" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
                     <option value="Bakery">Bakery</option>
-                    <option value="Beverages">Beverages</option>
+                    <option value="Minuman">Minuman</option>
                     <option value="Main Course">Main Course</option>
                     <option value="Paket">Paket</option>
                 </select>
@@ -75,17 +76,22 @@
                 <input type="number" id="menu-price" required class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
             </div>
             <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Barcode</label>
+                <input type="text" id="menu-barcode" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30" placeholder="Scan/ketik barcode...">
+            </div>
+            <div>
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Foto Menu</label>
                 <div class="mt-2 flex items-center gap-3">
-                    <input type="file" id="menu-image-file" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
-                    <button type="button" onclick="document.getElementById('menu-image-file').click()" class="flex-1 bg-gray-100 border border-gray-100 py-3 rounded-2xl text-[10px] font-bold text-gray-600 hover:bg-gray-200 transition-all uppercase tracking-widest">
-                        <i class="fas fa-camera mr-2"></i> Pilih Foto dari Galeri
-                    </button>
+                    <label class="flex-1 cursor-pointer">
+                        <div class="bg-gray-100 border border-gray-100 py-3 rounded-2xl text-[10px] font-bold text-gray-600 hover:bg-gray-200 transition-all uppercase tracking-widest text-center">
+                            <i class="fas fa-camera mr-2"></i> Pilih Foto dari Galeri
+                        </div>
+                        <input type="file" id="menu-image-file" name="image_file" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
+                    </label>
                     <div id="image-preview-container" class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden hidden">
                         <img id="menu-image-preview" src="" class="w-full h-full object-cover">
                     </div>
                 </div>
-                <input type="hidden" id="menu-image">
             </div>
             <div>
                 <label id="desc-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Deskripsi</label>
@@ -165,6 +171,7 @@
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
+    const STORAGE_URL = "{{ asset('storage') }}";
     let menus = [];
     let activeMenuCategory = 'all';
     let cropper = null;
@@ -185,8 +192,8 @@
         document.querySelectorAll('.menu-filter').forEach(button => {
             const active = button.dataset.menuFilter === category;
             button.className = active
-                ? 'menu-filter bg-coffee text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap'
-                : 'menu-filter bg-white border border-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap';
+                ? 'menu-filter bg-coffee text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all'
+                : 'menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all';
         });
         renderMenuTable();
     }
@@ -197,16 +204,21 @@
             ? menus
             : menus.filter(menu => menu.category === activeMenuCategory);
 
-        tbody.innerHTML = visibleMenus.length ? '' : '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400">Belum ada menu di kategori ini.</td></tr>';
+        tbody.innerHTML = visibleMenus.length ? '' : '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">Belum ada menu di kategori ini.</td></tr>';
         
         visibleMenus.forEach(menu => {
+            let imageUrl = menu.image || 'https://placehold.co/200x200?text=No+Image';
+            if (menu.image && !menu.image.startsWith('http')) {
+                imageUrl = `${STORAGE_URL}/${menu.image}`;
+            }
+
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50 transition-colors';
             tr.innerHTML = `
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img src="${menu.image || 'https://placehold.co/200x200?text=No+Image'}" class="w-full h-full object-cover">
+                            <img src="${imageUrl}" class="w-full h-full object-cover">
                         </div>
                         <div>
                             <p class="font-bold text-gray-800 text-xs">${menu.name}</p>
@@ -214,6 +226,9 @@
                             ${menu.category === 'Paket' ? '<p class="text-[9px] text-amber-600 font-bold mt-1">' + (menu.add_ons || []).length + ' add-on</p>' : ''}
                         </div>
                     </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-xs font-mono text-gray-600">${menu.barcode || '-'}</span>
                 </td>
                 <td class="px-6 py-4">
                     <span class="text-[10px] font-bold text-gray-500 uppercase">${menu.category}</span>
@@ -378,11 +393,12 @@
         renderPackageItems();
         
         if (document.getElementById('menu-id')) document.getElementById('menu-id').value = '';
-        if (document.getElementById('menu-image')) document.getElementById('menu-image').value = '';
+        if (document.getElementById('menu-barcode')) document.getElementById('menu-barcode').value = '';
+        if (document.getElementById('menu-image-file')) document.getElementById('menu-image-file').value = '';
         if (document.getElementById('menu-add-ons')) document.getElementById('menu-add-ons').value = '';
         if (previewContainer) previewContainer.classList.add('hidden');
         if (previewImg) previewImg.src = '';
-        
+
         if (title) title.innerText = id ? 'Edit Menu' : 'Tambah Menu Baru';
         
         if (presetCategory) {
@@ -395,9 +411,9 @@
             if (menu) {
                 if (document.getElementById('menu-id')) document.getElementById('menu-id').value = menu.id;
                 if (document.getElementById('menu-name')) document.getElementById('menu-name').value = menu.name;
+                if (document.getElementById('menu-barcode')) document.getElementById('menu-barcode').value = menu.barcode || '';
                 if (document.getElementById('menu-category')) document.getElementById('menu-category').value = menu.category;
                 if (document.getElementById('menu-price')) document.getElementById('menu-price').value = menu.price;
-                if (document.getElementById('menu-image')) document.getElementById('menu-image').value = menu.image || '';
                 if (document.getElementById('menu-description')) document.getElementById('menu-description').value = menu.description || '';
                 
                 if (document.getElementById('menu-add-ons')) {
@@ -409,7 +425,7 @@
                 if (document.getElementById('menu-available')) document.getElementById('menu-available').checked = menu.is_available;
 
                 if (menu.image && previewImg && previewContainer) {
-                    previewImg.src = menu.image;
+                    previewImg.src = menu.image.startsWith('http') ? menu.image : `${STORAGE_URL}/${menu.image}`;
                     previewContainer.classList.remove('hidden');
                 }
 
@@ -435,6 +451,11 @@
         toggleAddOnField();
         if (modal) modal.classList.remove('hidden');
         if (form) form.scrollTop = 0;
+    }
+
+    function closeMenuModal() {
+        const modal = document.getElementById('menu-modal');
+        if (modal) modal.classList.add('hidden');
     }
 
     async function handleFileSelect(input) {
@@ -503,10 +524,12 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (document.getElementById('menu-image')) document.getElementById('menu-image').value = result.path;
                     
                     const previewContainer = document.getElementById('image-preview-container');
                     const previewImg = document.getElementById('menu-image-preview');
+                    // We don't have menu-image hidden input, so we rely on the preview image path if needed, 
+                    // or just let the user know it's uploaded. 
+                    // Actually, the path is returned as result.path.
                     if (previewImg) previewImg.src = result.path;
                     if (previewContainer) previewContainer.classList.remove('hidden');
                     
@@ -522,79 +545,156 @@
         }, 'image/jpeg', 0.85);
     }
 
-    function closeMenuModal() {
-        const modal = document.getElementById('menu-modal');
-        if (modal) modal.classList.add('hidden');
+    function previewImage(input) {
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImg = document.getElementById('menu-image-preview');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 
-    function parseAddOns() {
-        const categorySelect = document.getElementById('menu-category');
-        if (!categorySelect || categorySelect.value !== 'Paket') {
-            return [];
+    function compressImage(file) {
+        const canCompress = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+        if (!canCompress || file.size <= 1500 * 1024) {
+            return Promise.resolve(file);
         }
 
-        const addOnsTextarea = document.getElementById('menu-add-ons');
-        if (!addOnsTextarea) return [];
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
 
-        return addOnsTextarea.value
-            .split('\n')
-            .map(row => row.trim())
-            .filter(Boolean)
-            .map(row => {
-                const [name, price = '0'] = row.split('|').map(part => part.trim());
-                return { name, price: Number(price.replace(/[^\d]/g, '')) || 0 };
-            })
-            .filter(addOn => addOn.name);
-    }
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
 
-    const menuForm = document.getElementById('menu-form');
-    if (menuForm) {
-        menuForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('menu-id').value;
-            const data = {
-                name: document.getElementById('menu-name').value,
-                category: document.getElementById('menu-category').value,
-                price: document.getElementById('menu-price').value,
-                image: document.getElementById('menu-image').value,
-                description: document.getElementById('menu-description').value,
-                add_ons: parseAddOns(),
-                is_available: document.getElementById('menu-available').checked,
+                const maxDimension = 1600;
+                const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+
+                    const compressedName = file.name.replace(/\.[^.]+$/, '.jpg');
+                    resolve(new File([blob], compressedName, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                    }));
+                }, 'image/jpeg', 0.85);
             };
 
-            const url = id ? `/admin/menus/${id}` : '/admin/menus';
-            const method = id ? 'PUT' : 'POST';
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error('Gambar tidak bisa dibaca.'));
+            };
 
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    closeMenuModal();
-                    loadMenus();
-                    window.showToast(id ? 'Menu berhasil diperbarui!' : 'Menu baru berhasil ditambahkan!');
-                } else {
-                    const result = await response.json();
-                    if (result.errors) {
-                        const firstError = Object.values(result.errors)[0][0];
-                        window.showToast(firstError, 'error');
-                    } else {
-                        window.showToast('Gagal menyimpan menu. Periksa input Anda.', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Error saving menu:', error);
-                window.showToast('Terjadi kesalahan saat menyimpan.', 'error');
-            }
+            img.src = objectUrl;
         });
     }
+
+    document.getElementById('menu-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerText;
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Menyimpan...';
+
+            const id = document.getElementById('menu-id').value;
+            const formData = new FormData();
+            
+            formData.append('name', document.getElementById('menu-name').value);
+            formData.append('barcode', document.getElementById('menu-barcode').value);
+            formData.append('category', document.getElementById('menu-category').value);
+            formData.append('price', document.getElementById('menu-price').value);
+            formData.append('description', document.getElementById('menu-description').value);
+            const parseAddOns = () => {
+                const text = document.getElementById('menu-add-ons').value.trim();
+                if (!text) return [];
+                return text.split('\n').map(line => {
+                    const parts = line.split('|');
+                    if (parts.length < 2) return null;
+                    return { name: parts[0].trim(), price: parseFloat(parts[1].trim()) || 0 };
+                }).filter(Boolean);
+            };
+
+            formData.append('add_ons', JSON.stringify(parseAddOns()));
+            formData.append('is_available', document.getElementById('menu-available').checked ? '1' : '0');
+            
+            const fileInput = document.getElementById('menu-image-file');
+            if (fileInput.files[0]) {
+                const imageFile = await compressImage(fileInput.files[0]);
+                formData.append('image_file', imageFile);
+            }
+
+            // If we have an image path from cropper upload, we can append it too
+            const previewImg = document.getElementById('menu-image-preview');
+            if (previewImg && previewImg.src.startsWith('http') && !previewImg.src.includes('placehold.co')) {
+                // Try to extract the path from the full URL if it's from our storage
+                const storagePrefix = STORAGE_URL;
+                if (previewImg.src.includes(storagePrefix)) {
+                    const relativePath = previewImg.src.replace(storagePrefix + '/', '');
+                    formData.append('image', relativePath);
+                } else {
+                    formData.append('image', previewImg.src);
+                }
+            }
+
+            let url = id ? `/admin/menus/${id}` : '/admin/menus';
+            
+            // Method spoofing for PUT because FormData doesn't support PUT directly in some PHP versions/Laravel setups
+            if (id) {
+                formData.append('_method', 'PUT');
+            }
+
+            const response = await fetch(url, {
+                method: 'POST', // Always POST when using FormData with file
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                closeMenuModal();
+                await loadMenus();
+                window.showToast(id ? 'Menu berhasil diperbarui!' : 'Menu baru berhasil ditambahkan!');
+            } else {
+                let errorMessage = 'Periksa kembali input Anda.';
+                try {
+                    const err = await response.json();
+                    errorMessage = err.message || errorMessage;
+                    if (err.errors) {
+                        errorMessage = Object.values(err.errors).flat().join('\n');
+                    }
+                    console.error('Save error details:', err);
+                } catch (e) {
+                    console.error('Non-JSON error response');
+                }
+                window.showToast('Gagal menyimpan: ' + errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            window.showToast('Terjadi kesalahan sistem atau koneksi. Silakan coba lagi.', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+        }
+    });
 
     async function deleteMenu(id) {
         const confirmed = await window.showConfirm({

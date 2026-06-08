@@ -24,8 +24,8 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="card flex flex-col justify-between border-b-4 border-b-blue-500">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="card flex flex-col justify-between border-none shadow-md hover:shadow-lg transition-all border-b-4 !border-b-blue-500">
             <div class="flex justify-between items-start mb-4">
                 <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
                     <i class="fas fa-calendar-day"></i>
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="card flex flex-col justify-between border-b-4 border-b-indigo-500">
+        <div class="card flex flex-col justify-between border-none shadow-md hover:shadow-lg transition-all border-b-4 !border-b-indigo-500">
             <div class="flex justify-between items-start mb-4">
                 <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-xl flex items-center justify-center">
                     <i class="fas fa-calendar-week"></i>
@@ -53,7 +53,7 @@
             </div>
         </div>
 
-        <div class="card flex flex-col justify-between border-b-4 border-b-purple-500">
+        <div class="card flex flex-col justify-between border-none shadow-md hover:shadow-lg transition-all border-b-4 !border-b-purple-500">
             <div class="flex justify-between items-start mb-4">
                 <div class="w-10 h-10 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
                     <i class="fas fa-calendar-check"></i>
@@ -67,7 +67,7 @@
             </div>
         </div>
 
-        <div class="card flex flex-col justify-between border-b-4 border-b-red-500">
+        <div class="card flex flex-col justify-between border-none shadow-md hover:shadow-lg transition-all border-b-4 !border-b-red-500">
             <div class="flex justify-between items-start mb-4">
                 <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
                     <i class="fas fa-arrow-down"></i>
@@ -82,22 +82,22 @@
     </div>
 
     <!-- Detailed Transactions Table -->
-    <div class="card !p-0 overflow-hidden">
-        <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="card !p-0 overflow-hidden shadow-md border-none">
+        <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white sticky top-0 z-10">
             <h3 class="font-bold text-gray-800">Rincian Transaksi</h3>
             <div class="flex gap-2">
-                <input type="date" id="filter-date" class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs outline-none focus:border-coffee/30">
+                <input type="date" id="filter-date" class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-coffee/30">
             </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] tracking-widest font-bold">
                     <tr>
-                        <th class="text-left px-6 py-4">Waktu</th>
-                        <th class="text-left px-6 py-4">Meja</th>
-                        <th class="text-left px-6 py-4">Metode</th>
-                        <th class="text-left px-6 py-4">Total</th>
-                        <th class="text-right px-6 py-4">Aksi</th>
+                        <th class="text-left px-6 py-5">Waktu</th>
+                        <th class="text-left px-6 py-5">Meja</th>
+                        <th class="text-left px-6 py-5">Metode</th>
+                        <th class="text-left px-6 py-5">Total</th>
+                        <th class="text-right px-6 py-5">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="transactions-table-body" class="divide-y divide-gray-50">

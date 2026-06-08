@@ -11,73 +11,52 @@
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .toast {
-        position: fixed;
-        left: 50%;
-        top: 20px;
-        z-index: 100;
-        width: calc(100% - 32px);
-        max-width: 420px;
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: #ffffff;
-        color: #1f2937;
-        box-shadow: 0 20px 45px rgba(31, 41, 55, 0.18);
-        border-left: 6px solid #22c55e;
-        transform: translate(-50%, -18px);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.25s ease, transform 0.25s ease;
-    }
-    .toast.show {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-    .confirm-backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 110;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        background: rgba(17, 24, 39, 0.55);
-        backdrop-filter: blur(4px);
-    }
-    .confirm-backdrop.show {
-        display: flex;
-    }
-    .confirm-box {
-        width: 100%;
-        max-width: 420px;
-        border-radius: 24px;
-        background: #ffffff;
-        box-shadow: 0 25px 55px rgba(17, 24, 39, 0.28);
-        transform: translateY(10px) scale(0.98);
-        animation: popIn 0.2s ease forwards;
-    }
-    @keyframes popIn {
-        to { transform: translateY(0) scale(1); }
-    }
 </style>
 @endpush
 
 @section('content')
-<div id="confirm-modal-local" class="confirm-backdrop">
-    <div class="confirm-box p-6">
-        <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center mb-4">
-            <i class="fas fa-triangle-exclamation text-xl"></i>
+
+<!-- Register New Product Modal -->
+<div id="product-register-modal" class="confirm-backdrop">
+    <div class="confirm-box p-6 !max-w-md">
+        <div class="w-12 h-12 rounded-2xl bg-coffee/10 text-coffee flex items-center justify-center mb-4">
+            <i class="fas fa-plus text-xl"></i>
         </div>
-        <h3 id="confirm-title-local" class="text-lg font-bold text-gray-800 mb-2">Konfirmasi</h3>
-        <p id="confirm-message-local" class="text-sm text-gray-500 mb-5"></p>
-        <div class="grid grid-cols-2 gap-3">
-            <button id="confirm-cancel-local" type="button" class="bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold text-sm">
-                Batal
-            </button>
-            <button id="confirm-ok-local" type="button" class="bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">
-                Hapus
-            </button>
-        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Produk Baru Terdeteksi</h3>
+        <p class="text-xs text-gray-400 mb-4">Produk ini ditemukan di database online. Masukkan harga dan kategori untuk mendaftarkannya.</p>
+        
+        <form id="product-register-form" onsubmit="saveNewScannedProduct(event)">
+            <input type="hidden" id="reg-barcode">
+            <div class="space-y-4 mb-5">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Produk</label>
+                    <input type="text" id="reg-name" required class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kategori</label>
+                        <select id="reg-category" required class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
+                            <option value="Minuman">Minuman</option>
+                            <option value="Bakery">Bakery</option>
+                            <option value="Main Course">Main Course</option>
+                            <option value="Cemilan">Cemilan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Harga Jual (Rp)</label>
+                        <input type="number" id="reg-price" required min="0" placeholder="Contoh: 10000" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeProductRegisterModal()" type="button" class="bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold text-sm">
+                    Batal
+                </button>
+                <button type="submit" class="bg-coffee text-white py-3 rounded-2xl font-bold text-sm hover:bg-coffee-dark transition-all">
+                    Simpan & Tambah
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -89,6 +68,9 @@
     <div class="flex items-center gap-2 bg-gray-100 p-1.5 rounded-2xl">
         <button onclick="showSection('orders')" id="orders-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-coffee">
             Pesanan
+        </button>
+        <button onclick="showSection('scan')" id="scan-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+            Scan Barcode Belanja
         </button>
         <button onclick="showSection('report')" id="report-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
             Laporan
@@ -111,6 +93,107 @@
             <i class="fas fa-receipt text-4xl"></i>
         </div>
         <p class="text-lg font-medium text-gray-400">Belum ada pesanan masuk</p>
+    </div>
+</section>
+
+<section id="scan-section" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Scanner Input Panel -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="card !p-6">
+                <h3 class="font-bold text-gray-800 text-lg mb-2 flex items-center gap-2">
+                    <i class="fas fa-barcode text-coffee"></i> Scan Item
+                </h3>
+                <p class="text-xs text-gray-400 mb-4">Arahkan alat barcode scanner Anda dan scan barcode item menu, atau ketik manual kodenya di bawah ini.</p>
+                
+                <!-- Camera Scan Feature (html5-qrcode) -->
+                <div class="mb-4 bg-gray-50/50 border border-gray-100 rounded-2xl p-4">
+                    <button type="button" onclick="toggleCameraScanner()" class="flex items-center justify-between w-full text-xs font-bold text-gray-600 uppercase tracking-widest hover:text-coffee transition-all outline-none">
+                        <span class="flex items-center gap-2 text-coffee">
+                            <i class="fas fa-camera"></i> Gunakan Kamera (Scan Barcode)
+                        </span>
+                        <span id="camera-btn-text" class="text-xs text-gray-400 font-semibold">Buka Kamera</span>
+                    </button>
+                    <div id="camera-scanner-container" class="hidden mt-4 bg-black rounded-xl overflow-hidden relative aspect-video w-full max-w-sm mx-auto shadow-inner">
+                        <div id="interactive" class="w-full h-full"></div>
+                        <div class="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none flex items-center justify-center">
+                            <div class="w-2/3 h-1/2 border-2 border-coffee/60 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 bg-gray-50 border border-gray-100 rounded-2xl p-2 focus-within:border-coffee/30 focus-within:bg-white transition-all shadow-inner">
+                    <input type="text" id="scanner-input" placeholder="Scan barcode disini..." class="flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400" autofocus>
+                    <button onclick="triggerManualScan()" class="bg-coffee text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-coffee/15 flex items-center gap-1.5">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                </div>
+            </div>
+
+            <!-- List Menu references for cashier reference (Premium aesthetic) -->
+            <div class="card !p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-bold text-gray-700 text-sm">Referensi Menu Terdaftar</h4>
+                    <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-[8px] text-[9px] font-bold" id="ref-menu-count">0 menu</span>
+                </div>
+                <div class="overflow-y-auto max-h-[40vh] pr-2 space-y-2 no-scrollbar" id="ref-menu-list">
+                    <!-- Loaded dynamically via fetch /admin/menus -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Cashier Cart Panel -->
+        <div class="space-y-6">
+            <div class="card !p-6 flex flex-col min-h-[50vh] justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-shopping-basket text-coffee"></i> Keranjang</h3>
+                        <button onclick="clearCashierCart()" class="text-[10px] text-red-500 font-bold hover:underline">Reset</button>
+                    </div>
+
+                    <!-- Cart Items List -->
+                    <div id="cashier-cart-items" class="space-y-3 max-h-[30vh] overflow-y-auto pr-1">
+                        <p class="text-center py-8 text-xs text-gray-400">Keranjang kosong. Silakan scan barcode item.</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4 mt-4 space-y-4">
+                    <!-- Meja & Pembayaran info -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">No Meja</label>
+                            <input type="number" id="cashier-table" placeholder="Meja" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs outline-none focus:border-coffee/30 font-semibold" min="1">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Bayar</label>
+                            <select id="cashier-payment" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs outline-none focus:border-coffee/30 font-semibold">
+                                <option value="Cash">Cash</option>
+                                <option value="QRIS">QRIS</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Subtotal</span>
+                            <span id="cashier-subtotal">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Pajak (12%)</span>
+                            <span id="cashier-tax">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-sm text-[#634832] pt-1.5 border-t border-dashed">
+                            <span>Total</span>
+                            <span id="cashier-total">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <button onclick="submitCashierOrder()" class="w-full bg-coffee text-white py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-coffee/20 hover:scale-[1.02] active:scale-95 transition-all">
+                        BUAT PESANAN
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -194,6 +277,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     let activeSection = 'orders';
 
@@ -204,15 +288,31 @@
     function showSection(section) {
         activeSection = section;
         document.getElementById('orders-section').classList.toggle('hidden', section !== 'orders');
+        document.getElementById('scan-section').classList.toggle('hidden', section !== 'scan');
         document.getElementById('report-section').classList.toggle('hidden', section !== 'report');
         
-        const title = section === 'orders' ? 'Pesanan Masuk' : 'Laporan Keuangan';
-        const desc = section === 'orders' ? 'Monitor pesanan pelanggan secara real-time.' : 'Ringkasan transaksi yang sudah diselesaikan hari ini.';
+        let title = 'Pesanan Masuk';
+        let desc = 'Monitor pesanan pelanggan secara real-time.';
+        if (section === 'scan') {
+            title = 'Scan Barcode Belanja';
+            desc = 'Scan barcode item untuk membuat pesanan pelanggan secara langsung.';
+            loadRefMenus();
+            setTimeout(() => {
+                const scannerInput = document.getElementById('scanner-input');
+                if (scannerInput) scannerInput.focus();
+            }, 100);
+        } else if (section === 'report') {
+            title = 'Laporan Keuangan';
+            desc = 'Ringkasan transaksi yang sudah diselesaikan hari ini.';
+        }
         
         document.getElementById('section-title').innerText = title;
         document.getElementById('section-desc').innerText = desc;
 
         document.getElementById('orders-tab').className = section === 'orders'
+            ? 'px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-coffee'
+            : 'px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700';
+        document.getElementById('scan-tab').className = section === 'scan'
             ? 'px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-coffee'
             : 'px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700';
         document.getElementById('report-tab').className = section === 'report'
@@ -323,10 +423,10 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="deleteOrder('${order.id}')" class="bg-red-50 text-red-500 py-3 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all">
+                                <button onclick="deleteOrder('${order.id}')" class="bg-red-50 text-red-500 py-3 rounded-xl font-bold text-xs hover:bg-red-500 hover:text-white transition-all duration-300">
                                     <i class="fas fa-trash-can mr-1"></i> Batal
                                 </button>
-                                <button onclick="completeOrder('${order.id}')" class="bg-coffee text-white py-3 rounded-xl font-bold text-xs hover:bg-opacity-90 transition-all shadow-md shadow-coffee/10">
+                                <button onclick="completeOrder('${order.id}')" class="bg-coffee text-white py-3 rounded-xl font-bold text-xs hover:bg-opacity-95 hover:scale-[1.02] transition-all duration-300 shadow-md shadow-coffee/10">
                                     <i class="fas fa-check mr-2"></i> Selesai
                                 </button>
                             </div>
@@ -495,6 +595,379 @@
         }
     }
 
+    // --- Cashier Scan & Cart Logic ---
+    let cashierCart = [];
+    let registeredMenus = [];
+
+    async function loadRefMenus() {
+        try {
+            const response = await fetch('/admin/menus', { headers: { 'Accept': 'application/json' } });
+            registeredMenus = await response.json();
+            
+            // Render count
+            document.getElementById('ref-menu-count').innerText = `${registeredMenus.length} menu`;
+
+            // Render list
+            const container = document.getElementById('ref-menu-list');
+            container.innerHTML = '';
+            
+            registeredMenus.forEach(menu => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100 rounded-xl transition-all cursor-pointer';
+                item.onclick = () => addMenuItemToCashierCart(menu);
+                
+                const hasBarcode = menu.barcode ? `<span class="bg-coffee/10 text-coffee font-mono px-2 py-0.5 rounded text-[9px] font-bold">${menu.barcode}</span>` : '<span class="text-gray-300 text-[9px]">Tanpa barcode</span>';
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <i class="fas fa-mug-hot text-xs text-gray-400"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-xs text-gray-700">${menu.name}</p>
+                            <p class="text-[10px] text-gray-400">Rp ${Number(menu.price).toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <div>${hasBarcode}</div>
+                `;
+                container.appendChild(item);
+            });
+        } catch (error) {
+            console.error('Error loading reference menus:', error);
+        }
+    }
+
+    // Attach Event Listener for Keypress in Scanner Input & Globally for barcode scanner
+    let cashierBarcodeBuffer = '';
+    let cashierLastKeyTime = 0;
+
+    window.addEventListener('keypress', function(e) {
+        // Only run scan detection if active section is 'scan'
+        if (activeSection !== 'scan') return;
+
+        const currentTime = Date.now();
+        
+        // If focusing on some inputs (like table number/notes/scanner input), prevent global capture
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (activeTag === 'textarea' || (activeTag === 'input' && (document.activeElement.id === 'cashier-table' || document.activeElement.id === 'scanner-input'))) {
+            return;
+        }
+
+        // Hardware scanners output characters very fast (typically < 30ms difference)
+        if (currentTime - cashierLastKeyTime > 50) {
+            cashierBarcodeBuffer = '';
+        }
+        
+        cashierLastKeyTime = currentTime;
+
+        if (e.key === 'Enter') {
+            if (cashierBarcodeBuffer.length >= 3) {
+                e.preventDefault();
+                processCashierBarcode(cashierBarcodeBuffer);
+            }
+            cashierBarcodeBuffer = '';
+            
+            // Clear input field if focus is inside scanner-input
+            const input = document.getElementById('scanner-input');
+            if (input) input.value = '';
+        } else if (/^[a-zA-Z0-9]$/.test(e.key)) {
+            cashierBarcodeBuffer += e.key;
+        }
+    });
+
+    // Also support typing / pressing search button manually
+    const scannerInput = document.getElementById('scanner-input');
+    if (scannerInput) {
+        scannerInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent duplicate processing on window event listener
+                const code = this.value.trim();
+                if (code) {
+                    processCashierBarcode(code);
+                    this.value = '';
+                }
+            }
+        });
+    }
+
+    function triggerManualScan() {
+        const input = document.getElementById('scanner-input');
+        const code = input.value.trim();
+        if (!code) return;
+        
+        processCashierBarcode(code);
+        input.value = '';
+        input.focus();
+    }
+
+    let html5QrCode = null;
+    let cameraScanActive = false;
+
+    async function toggleCameraScanner() {
+        const container = document.getElementById('camera-scanner-container');
+        const btnText = document.getElementById('camera-btn-text');
+        
+        if (cameraScanActive) {
+            if (html5QrCode) {
+                try {
+                    await html5QrCode.stop();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            container.classList.add('hidden');
+            btnText.innerText = 'Buka Kamera';
+            cameraScanActive = false;
+        } else {
+            container.classList.remove('hidden');
+            btnText.innerText = 'Tutup Kamera';
+            cameraScanActive = true;
+            
+            setTimeout(() => {
+                html5QrCode = new Html5Qrcode("interactive");
+                const config = { fps: 15, qrbox: { width: 250, height: 150 } };
+                
+                html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config,
+                    (decodedText) => {
+                        processCashierBarcode(decodedText);
+                        toggleCameraScanner(); // Stop scanning after success
+                    },
+                    (errorMessage) => {
+                        // ignore failures
+                    }
+                ).catch(err => {
+                    console.error(err);
+                    window.showToast("Gagal mengakses kamera. Pastikan izin kamera aktif & gunakan HTTPS.", "error");
+                    toggleCameraScanner();
+                });
+            }, 100);
+        }
+    }
+
+    function openProductRegisterModal(barcode, name) {
+        document.getElementById('reg-barcode').value = barcode;
+        document.getElementById('reg-name').value = name;
+        document.getElementById('reg-price').value = '';
+        
+        const modal = document.getElementById('product-register-modal');
+        if (modal) modal.classList.add('show');
+    }
+
+    function closeProductRegisterModal() {
+        const modal = document.getElementById('product-register-modal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    async function saveNewScannedProduct(e) {
+        e.preventDefault();
+        
+        const barcode = document.getElementById('reg-barcode').value;
+        const name = document.getElementById('reg-name').value;
+        const category = document.getElementById('reg-category').value;
+        const price = document.getElementById('reg-price').value;
+        
+        try {
+            const response = await fetch('/admin/menus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    name: name,
+                    category: category,
+                    price: price,
+                    barcode: barcode,
+                    is_available: true,
+                    description: 'Terdaftar otomatis via barcode scanner.'
+                })
+            });
+            
+            const result = await response.json();
+            if (response.ok) {
+                window.showToast(`Berhasil mendaftarkan ${name}!`);
+                closeProductRegisterModal();
+                
+                // Refresh registered menus list
+                await loadRefMenus();
+                
+                // Add the newly created item to cart
+                addMenuItemToCashierCart(result);
+            } else {
+                window.showToast(result.message || 'Gagal menyimpan produk baru.', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving scanned product:', error);
+            window.showToast('Gagal terhubung ke server untuk menyimpan produk.', 'error');
+        }
+    }
+
+    async function processCashierBarcode(code) {
+        // Find menu by barcode
+        const menu = registeredMenus.find(m => String(m.barcode) === String(code));
+        if (menu) {
+            addMenuItemToCashierCart(menu);
+            return;
+        }
+
+        // Look up product from Open Food Facts API
+        window.showToast(`Mencari produk barcode "${code}" di database online...`, 'info');
+        
+        try {
+            const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_id,brands`);
+            const data = await response.json();
+            
+            if (data.status === 1 && data.product) {
+                const productName = data.product.product_name_id || data.product.product_name || "Produk Baru";
+                const brand = data.product.brands ? ` (${data.product.brands})` : '';
+                const fullName = productName + brand;
+                
+                openProductRegisterModal(code, fullName);
+            } else {
+                window.showToast(`Barcode "${code}" tidak terdaftar di database lokal maupun online!`, 'error');
+            }
+        } catch (error) {
+            console.error('Error looking up barcode:', error);
+            window.showToast(`Gagal menghubungi database online. Tambahkan manual di menu.`, 'error');
+        }
+    }
+
+    function addMenuItemToCashierCart(menu) {
+        const existing = cashierCart.find(item => item.id === menu.id);
+        if (existing) {
+            existing.quantity++;
+        } else {
+            cashierCart.push({
+                id: menu.id,
+                name: menu.name,
+                price: menu.price,
+                quantity: 1,
+                options: null // Direct additions from cashier
+            });
+        }
+        updateCashierCartUI();
+        window.showToast(`Berhasil menambahkan ${menu.name} ke keranjang!`);
+    }
+
+    function removeCashierCartQty(id) {
+        const item = cashierCart.find(i => i.id === id);
+        if (item) {
+            if (item.quantity > 1) {
+                item.quantity--;
+            } else {
+                cashierCart = cashierCart.filter(i => i.id !== id);
+            }
+            updateCashierCartUI();
+        }
+    }
+
+    function addCashierCartQty(id) {
+        const item = cashierCart.find(i => i.id === id);
+        if (item) {
+            item.quantity++;
+            updateCashierCartUI();
+        }
+    }
+
+    function clearCashierCart() {
+        cashierCart = [];
+        updateCashierCartUI();
+    }
+
+    function updateCashierCartUI() {
+        const container = document.getElementById('cashier-cart-items');
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (cashierCart.length === 0) {
+            container.innerHTML = '<p class="text-center py-8 text-xs text-gray-400">Keranjang kosong. Silakan scan barcode item.</p>';
+            document.getElementById('cashier-subtotal').innerText = 'Rp 0';
+            document.getElementById('cashier-tax').innerText = 'Rp 0';
+            document.getElementById('cashier-total').innerText = 'Rp 0';
+            return;
+        }
+
+        let subtotal = 0;
+        cashierCart.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm';
+            row.innerHTML = `
+                <div class="flex-grow">
+                    <p class="font-bold text-xs text-gray-800">${item.name}</p>
+                    <p class="text-[10px] text-gray-400">Rp ${Number(item.price).toLocaleString('id-ID')}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="removeCashierCartQty(${item.id})" class="w-6 h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center text-xs hover:bg-gray-100">-</button>
+                    <span class="text-xs font-semibold w-5 text-center">${item.quantity}</span>
+                    <button onclick="addCashierCartQty(${item.id})" class="w-6 h-6 rounded-full bg-coffee text-white flex items-center justify-center text-xs">+</button>
+                </div>
+            `;
+            container.appendChild(row);
+            subtotal += item.price * item.quantity;
+        });
+
+        const tax = Math.round(subtotal * 0.12);
+        const total = subtotal + tax;
+
+        document.getElementById('cashier-subtotal').innerText = 'Rp ' + subtotal.toLocaleString('id-ID');
+        document.getElementById('cashier-tax').innerText = 'Rp ' + tax.toLocaleString('id-ID');
+        document.getElementById('cashier-total').innerText = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    async function submitCashierOrder() {
+        if (cashierCart.length === 0) {
+            window.showToast('Keranjang masih kosong!', 'error');
+            return;
+        }
+
+        const table = document.getElementById('cashier-table').value.trim();
+        if (!table) {
+            window.showToast('Harap isi nomor meja!', 'error');
+            return;
+        }
+
+        const payment = document.getElementById('cashier-payment').value;
+        const subtotal = cashierCart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+        const tax = Math.round(subtotal * 0.12);
+        const total = subtotal + tax;
+
+        try {
+            const response = await fetch('/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    table: table,
+                    payment: payment,
+                    orderNote: 'Dibuat langsung oleh Kasir',
+                    items: cashierCart,
+                    subtotal: subtotal,
+                    tax: tax,
+                    total: total
+                })
+            });
+
+            if (response.ok) {
+                window.showToast('Pesanan berhasil dibuat!');
+                clearCashierCart();
+                document.getElementById('cashier-table').value = '';
+                showSection('orders');
+            } else {
+                window.showToast('Gagal membuat pesanan.', 'error');
+            }
+        } catch (error) {
+            console.error('Error submitting cashier order:', error);
+            window.showToast('Terjadi kesalahan koneksi.', 'error');
+        }
+    }
+
     document.getElementById('report-date').value = new Date().toISOString().slice(0, 10);
     loadOrders();
     
@@ -506,4 +979,3 @@
     }, 5000);
 </script>
 @endpush
-@endsection

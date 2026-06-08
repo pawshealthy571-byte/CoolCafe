@@ -331,19 +331,9 @@ Route::delete('/orders', function () {
     return response()->json(['ok' => true]);
 });
 
-Route::get('/admin/management/users/admin', function () {
+Route::get('/admin/management/users', function () {
     if (! userHasRole(['admin', 'superadmin'])) abort(403);
-    return view('dashboard.users.admins');
-});
-
-Route::get('/admin/management/users/chef', function () {
-    if (! userHasRole(['admin', 'superadmin'])) abort(403);
-    return view('dashboard.users.chefs');
-});
-
-Route::get('/admin/management/users/cashier', function () {
-    if (! userHasRole(['admin', 'superadmin'])) abort(403);
-    return view('dashboard.users.cashiers');
+    return view('dashboard.users.index');
 });
 
 Route::get('/admin/management/ingredients', function () {
@@ -365,6 +355,69 @@ Route::get('/admin/management/reports', function () {
         abort(403);
     }
     return view('dashboard.reports');
+});
+
+Route::get('/admin/users', function (Request $request) {
+    if (! userHasRole(['admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $role = $request->query('role');
+    $query = App\Models\User::orderBy('name');
+    if ($role) {
+        $query->where('role', $role);
+    }
+    return response()->json($query->get());
+});
+
+Route::post('/admin/users', function (Request $request) {
+    if (! userHasRole(['admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'string', 'min:8'],
+        'role' => ['required', 'string', 'in:admin,cashier,chef,manager,superadmin'],
+    ]);
+    $data['password'] = Hash::make($data['password']);
+    $user = App\Models\User::create($data);
+    return response()->json($user);
+});
+
+Route::put('/admin/users/{id}', function (Request $request, $id) {
+    if (! userHasRole(['admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $user = App\Models\User::findOrFail($id);
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$id],
+        'password' => ['nullable', 'string', 'min:8'],
+        'role' => ['required', 'string', 'in:admin,cashier,chef,manager,superadmin'],
+    ]);
+    if (!empty($data['password'])) {
+        $data['password'] = Hash::make($data['password']);
+    } else {
+        unset($data['password']);
+    }
+    $user->update($data);
+    return response()->json($user);
+});
+
+Route::delete('/admin/users/{id}', function ($id) {
+    if (! userHasRole(['admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    $user = App\Models\User::findOrFail($id);
+    $user->delete();
+    return response()->json(['ok' => true]);
+});
+
+Route::get('/admin/expenses', function () {
+    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    return response()->json(readCoolCafeExpenses());
 });
 
 Route::get('/admin/ingredients', function () {
@@ -420,58 +473,16 @@ Route::delete('/admin/ingredients/{id}', function ($id) {
 });
 
 Route::get('/admin/menus', function () {
-    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
+    if (! userHasRole(['manager', 'admin', 'superadmin', 'cashier'])) {
         return response()->json(['message' => 'Forbidden.'], 403);
     }
 
     return response()->json(App\Models\Menu::all());
 });
 
-Route::post('/admin/menus', function (Request $request) {
-    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Forbidden.'], 403);
-    }
+Route::post('/admin/menus', [\App\Http\Controllers\MenuController::class, 'store']);
 
-    $data = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'category' => ['required', 'string', 'max:255'],
-        'price' => ['required', 'numeric', 'min:0'],
-        'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string'],
-        'add_ons' => ['nullable', 'array'],
-        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
-        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
-        'is_available' => ['required', 'boolean'],
-    ]);
-
-    $menu = App\Models\Menu::create($data);
-
-    return response()->json($menu);
-});
-
-Route::put('/admin/menus/{id}', function (Request $request, $id) {
-    if (! userHasRole(['manager', 'admin', 'superadmin'])) {
-        return response()->json(['message' => 'Forbidden.'], 403);
-    }
-
-    $menu = App\Models\Menu::findOrFail($id);
-
-    $data = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'category' => ['required', 'string', 'max:255'],
-        'price' => ['required', 'numeric', 'min:0'],
-        'description' => ['nullable', 'string'],
-        'image' => ['nullable', 'string'],
-        'add_ons' => ['nullable', 'array'],
-        'add_ons.*.name' => ['required_with:add_ons', 'string', 'max:120'],
-        'add_ons.*.price' => ['required_with:add_ons', 'numeric', 'min:0'],
-        'is_available' => ['required', 'boolean'],
-    ]);
-
-    $menu->update($data);
-
-    return response()->json($menu);
-});
+Route::match(['post', 'put'], '/admin/menus/{id}', [\App\Http\Controllers\MenuController::class, 'update']);
 
 Route::delete('/admin/menus/{id}', function ($id) {
     if (! userHasRole(['manager', 'admin', 'superadmin'])) {
@@ -503,6 +514,27 @@ function readCoolCafeOrders(): array
     $orders = json_decode(Storage::disk('local')->get('coolcafe_orders.json'), true);
 
     return is_array($orders) ? $orders : [];
+}
+
+function storeMenuImage(Request $request, array &$data, ?App\Models\Menu $menu = null): ?string
+{
+    $uploadedImage = $request->file('image_file');
+
+    if (! $uploadedImage) {
+        return null;
+    }
+
+    if (! $uploadedImage->isValid()) {
+        return 'Upload gambar gagal: '.$uploadedImage->getErrorMessage();
+    }
+
+    if ($menu?->image && ! str_starts_with($menu->image, 'http')) {
+        Storage::disk('public')->delete($menu->image);
+    }
+
+    $data['image'] = $uploadedImage->store('menus', 'public');
+
+    return null;
 }
 
 function userHasRole(array $roles): bool

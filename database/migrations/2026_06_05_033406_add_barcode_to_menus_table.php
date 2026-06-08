@@ -6,17 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('menus', function (Blueprint $table) {
-            $table->json('add_ons')->nullable();
+            $table->string('barcode')->nullable()->unique()->after('image');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn('add_ons');
+            $table->dropColumn('barcode');
         });
     }
 };

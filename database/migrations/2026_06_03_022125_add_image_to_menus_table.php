@@ -6,17 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('menus', function (Blueprint $table) {
-            $table->json('add_ons')->nullable();
+            if (!Schema::hasColumn('menus', 'image')) {
+                $table->string('image')->nullable()->after('description');
+            }
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn('add_ons');
+            if (Schema::hasColumn('menus', 'image')) {
+                $table->dropColumn('image');
+            }
         });
     }
 };
