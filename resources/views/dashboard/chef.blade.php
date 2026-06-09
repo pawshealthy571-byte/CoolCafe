@@ -52,12 +52,17 @@
     </div>
 </div>
 
-<div id="ingredient-notifications" class="hidden mb-8 bg-red-50 p-4 rounded-2xl border border-red-100 flex items-center gap-4">
-    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
-    <div>
-        <h4 class="font-bold text-red-800">Stok Bahan Habis!</h4>
-        <p id="low-stock-list" class="text-xs text-red-600"></p>
+<div id="ingredient-notifications" class="hidden mb-8 bg-red-50 p-4 rounded-2xl border border-red-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+        <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+        <div>
+            <h4 class="font-bold text-red-800">Peringatan: Stok Bahan Baku Menipis!</h4>
+            <p id="low-stock-list" class="text-xs text-red-600"></p>
+        </div>
     </div>
+    <button id="btn-notify-admin" onclick="notifyAdmin(this)" class="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors shadow-sm whitespace-nowrap self-start md:self-auto shrink-0">
+        <i class="fas fa-bell mr-2"></i> Lapor Admin
+    </button>
 </div>
 
 <section id="orders-section">
@@ -77,8 +82,9 @@
 @push('scripts')
 <script>
     const orderCards = new Map();
-    let lastOrderCount = -1;
     let soundEnabled = false;
+    let knownOrderIds = new Set();
+    let isFirstLoad = true;
 
     function toggleSound() {
         soundEnabled = !soundEnabled;
@@ -91,15 +97,20 @@
             btn.classList.remove('text-gray-500');
             icon.className = 'fas fa-volume-up';
             text.innerText = 'Suara On';
-            // Play a silent sound to unlock audio
-            const utterance = new SpeechSynthesisUtterance('');
-            window.speechSynthesis.speak(utterance);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance('Suara aktif');
+                utterance.lang = 'id-ID';
+                utterance.volume = 0.5;
+                window.speechSynthesis.speak(utterance);
+            }
             window.showToast('Notifikasi suara diaktifkan');
         } else {
             btn.classList.remove('text-coffee');
             btn.classList.add('text-gray-500');
             icon.className = 'fas fa-volume-mute';
             text.innerText = 'Suara Off';
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             window.showToast('Notifikasi suara dimatikan');
         }
     }
@@ -120,6 +131,11 @@
     }
 
     function speakOrder(id) {
+        if (!soundEnabled) {
+            window.showToast('Nyalakan "Suara On" terlebih dahulu', 'error');
+            return;
+        }
+
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
             return;
@@ -150,13 +166,18 @@
             const emptyState = document.getElementById('empty-state');
 
             // Sound Notification logic
-            if (lastOrderCount !== -1 && orders.length > lastOrderCount) {
-                const newOrders = orders.slice(lastOrderCount);
+            const currentIds = new Set(orders.map(o => String(o.id)));
+            if (!isFirstLoad) {
+                const newOrders = orders.filter(o => !knownOrderIds.has(String(o.id)));
                 newOrders.forEach(order => playOrderNotification(order.items));
             }
-            lastOrderCount = orders.length;
+            knownOrderIds = currentIds;
+            isFirstLoad = false;
 
-            if (!orders || orders.length === 0) {
+            // Filter out 'ready' orders
+            const activeOrders = orders.filter(o => o.status !== 'ready');
+
+            if (!activeOrders || activeOrders.length === 0) {
                 grid.innerHTML = '';
                 orderCards.clear();
                 emptyState.classList.remove('hidden');
@@ -164,21 +185,19 @@
             }
 
             emptyState.classList.add('hidden');
-            
-            const currentIds = new Set(orders.map(o => String(o.id)));
 
-            // Remove cards that are no longer in the list
+            // Remove stale cards
+            const activeIds = new Set(activeOrders.map(o => String(o.id)));
             for (const [id, element] of orderCards.entries()) {
-                if (!currentIds.has(id)) {
+                if (!activeIds.has(id)) {
                     element.remove();
                     orderCards.delete(id);
                 }
             }
 
             // Update or add cards
-            orders.forEach((order) => {
+            activeOrders.forEach((order) => {
                 const id = String(order.id);
-                const isReady = order.status === 'ready';
                 const statusJson = JSON.stringify({ status: order.status, items: (order.items || []).length });
                 
                 let card = orderCards.get(id);
@@ -196,7 +215,7 @@
                 }
 
                 card.dataset.state = statusJson;
-                card.className = `order-card card !p-0 overflow-hidden transition-all duration-300 ${isReady ? 'opacity-60 grayscale-[0.5]' : ''}`;
+                card.className = `order-card card !p-0 overflow-hidden transition-all duration-300`;
                 
                 let itemsHtml = (order.items || []).map(item => `
                     <div class="flex justify-between items-start py-2 border-b border-gray-50 last:border-0">
@@ -231,15 +250,9 @@
                             </div>
                         ` : ''}
                         <div class="pt-4 border-t border-gray-50">
-                            ${isReady ? `
-                                <div class="bg-green-50 text-green-600 p-3 rounded-xl flex items-center justify-center gap-2 font-bold text-xs">
-                                    <i class="fas fa-check-double"></i> Sudah Siap
-                                </div>
-                            ` : `
-                                <button onclick="markReady('${order.id}')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-100">
-                                    <i class="fas fa-concierge-bell mr-2"></i> Pesanan Siap!
-                                </button>
-                            `}
+                            <button onclick="markReady('${order.id}')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-100">
+                                <i class="fas fa-concierge-bell mr-2"></i> Pesanan Siap!
+                            </button>
                         </div>
                     </div>
                 `;
@@ -279,16 +292,48 @@
     async function checkStock() {
         const response = await fetch('/admin/ingredients');
         const ingredients = await response.json();
-        const lowStock = ingredients.filter(i => i.stock === 0);
+        const lowStock = ingredients.filter(i => i.stock < 10);
         
         const container = document.getElementById('ingredient-notifications');
         const list = document.getElementById('low-stock-list');
 
         if (lowStock.length > 0) {
-            list.textContent = lowStock.map(i => i.name).join(', ');
+            const items = lowStock.map(i => i.name).join(', ');
+            list.textContent = items;
             container.classList.remove('hidden');
+            
+            const btn = document.getElementById('btn-notify-admin');
+            if (btn) btn.dataset.items = items;
         } else {
             container.classList.add('hidden');
+        }
+    }
+
+    async function notifyAdmin(btn) {
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengirim...';
+        
+        try {
+            const res = await fetch('/api/chef/notify-restock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ items: btn.dataset.items })
+            });
+            
+            if (res.ok) {
+                window.showToast('Notifikasi berhasil dikirim ke Admin!');
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i> Terkirim';
+                btn.classList.replace('bg-red-600', 'bg-green-600');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     }
 

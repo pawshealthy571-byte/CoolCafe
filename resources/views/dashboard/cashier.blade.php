@@ -65,17 +65,17 @@
         <h2 id="section-title" class="text-2xl font-bold text-gray-800">Pesanan Masuk</h2>
         <p id="section-desc" class="text-gray-500 text-sm">Monitor pesanan pelanggan secara real-time.</p>
     </div>
-    <div class="flex items-center gap-2 bg-gray-100 p-1.5 rounded-2xl">
-        <button id="sound-toggle" onclick="toggleSound()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-2">
+    <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl flex-wrap justify-center">
+        <button id="sound-toggle" onclick="toggleSound()" class="px-3 py-2 rounded-xl text-[10px] font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-1.5">
             <i class="fas fa-volume-mute"></i> <span>Suara Off</span>
         </button>
-        <button onclick="showSection('orders')" id="orders-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-coffee">
+        <button onclick="showSection('orders')" id="orders-tab" class="px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white shadow-sm text-coffee">
             Pesanan
         </button>
-        <button onclick="showSection('scan')" id="scan-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
-            Scan Barcode Belanja
+        <button onclick="showSection('scan')" id="scan-tab" class="px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
+            Scan
         </button>
-        <button onclick="showSection('report')" id="report-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+        <button onclick="showSection('report')" id="report-tab" class="px-4 py-2 rounded-xl text-[10px] font-bold transition-all text-gray-500 hover:text-gray-700">
             Laporan
         </button>
     </div>
@@ -122,6 +122,28 @@
                         <div class="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none flex items-center justify-center">
                             <div class="w-2/3 h-1/2 border-2 border-coffee/60 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]"></div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- AI Gesture Assist -->
+                <div class="mb-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4">
+                    <button type="button" onclick="toggleGestureCamera()" class="flex items-center justify-between w-full text-xs font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-all outline-none">
+                        <span class="flex items-center gap-2">
+                            <i class="fas fa-hand-sparkles"></i> Kamera Sensor Gerak Tangan
+                        </span>
+                        <span id="gesture-btn-text" class="text-xs text-indigo-400 font-semibold">Buka Kamera</span>
+                    </button>
+                    <div id="gesture-scanner-container" class="hidden mt-4 relative aspect-video w-full max-w-sm mx-auto shadow-inner bg-black rounded-xl overflow-hidden">
+                        <video id="gesture-video" class="w-full h-full object-cover transform scale-x-[-1]" autoplay playsinline></video>
+                        <canvas id="gesture-canvas" class="absolute inset-0 w-full h-full transform scale-x-[-1] pointer-events-none"></canvas>
+                        <div id="gesture-output" class="absolute bottom-4 left-0 right-0 text-center text-white font-bold text-lg bg-black/50 py-1">Memuat Sensor...</div>
+                    </div>
+                    <div id="gesture-hint" class="text-[10px] text-indigo-500 mt-3 text-center hidden flex flex-col gap-1">
+                        <span>☝️ <b>Telunjuk</b>: +1 barang terpilih</span>
+                        <span>✌️ <b>Dua Jari</b>: +2 barang terpilih</span>
+                        <span>👎 <b>Jempol Bawah</b>: Kurangi 1 barang</span>
+                        <span>👍 <b>Jempol Atas</b>: Ganti pilihan barang di keranjang</span>
+                        <span class="text-indigo-300">Tahan gesture selama 1 detik. Gunakan tangan mengepal ✊ untuk mereset.</span>
                     </div>
                 </div>
 
@@ -201,18 +223,24 @@
 </section>
 
 <section id="report-section" class="hidden">
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-            <input type="date" id="report-date" class="bg-transparent border-none px-4 py-2 text-sm font-bold text-gray-700 outline-none">
-            <button onclick="loadReport()" class="bg-coffee text-white w-10 h-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
-                <i class="fas fa-filter text-xs"></i>
+    <!-- Enhanced Report Header Control Card -->
+    <div class="card mb-8 bg-white shadow-sm border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <input type="date" id="report-date" class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-700 outline-none focus:border-coffee/30 w-full md:w-auto">
+            <button onclick="loadReport()" class="bg-coffee text-white w-12 h-11 rounded-xl flex items-center justify-center hover:bg-coffee/90 hover:scale-105 active:scale-95 transition-all shadow-md shadow-coffee/20">
+                <i class="fas fa-filter"></i>
             </button>
         </div>
-        @if (in_array(Auth::user()->role, ['admin', 'superadmin', 'manager'], true))
-            <button onclick="clearSalesReport()" class="text-red-500 bg-red-50 px-5 py-3 rounded-2xl font-bold text-xs hover:bg-red-100 transition-all flex items-center gap-2">
-                <i class="fas fa-rotate-left"></i> Reset Laporan
+        <div class="flex gap-2 w-full md:w-auto">
+            <button onclick="printReport()" class="flex-1 md:flex-none justify-center bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs hover:bg-blue-700 transition-all flex items-center gap-2 shadow-md shadow-blue-500/20">
+                <i class="fas fa-print"></i> Cetak Laporan
             </button>
-        @endif
+            @if (in_array(Auth::user()->role, ['admin', 'superadmin', 'manager'], true))
+                <button onclick="clearSalesReport()" class="flex-1 md:flex-none justify-center text-red-500 bg-red-50 px-6 py-3 rounded-xl font-bold text-xs hover:bg-red-100 transition-all flex items-center gap-2">
+                    <i class="fas fa-rotate-left"></i> Reset
+                </button>
+            @endif
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -283,8 +311,9 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     let activeSection = 'orders';
-    let lastOrderCount = -1;
     let soundEnabled = false;
+    let knownOrderIds = new Set();
+    let isFirstLoad = true;
 
     function toggleSound() {
         soundEnabled = !soundEnabled;
@@ -297,15 +326,20 @@
             btn.classList.remove('text-gray-500');
             icon.className = 'fas fa-volume-up';
             text.innerText = 'Suara On';
-            // Play a silent sound to unlock audio
-            const utterance = new SpeechSynthesisUtterance('');
-            window.speechSynthesis.speak(utterance);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance('Suara aktif');
+                utterance.lang = 'id-ID';
+                utterance.volume = 0.5;
+                window.speechSynthesis.speak(utterance);
+            }
             window.showToast('Notifikasi suara diaktifkan');
         } else {
             btn.classList.remove('text-coffee');
             btn.classList.add('text-gray-500');
             icon.className = 'fas fa-volume-mute';
             text.innerText = 'Suara Off';
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             window.showToast('Notifikasi suara dimatikan');
         }
     }
@@ -326,6 +360,11 @@
     }
 
     function speakOrder(id) {
+        if (!soundEnabled) {
+            window.showToast('Nyalakan "Suara On" terlebih dahulu', 'error');
+            return;
+        }
+
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
             return;
@@ -403,14 +442,18 @@
             const emptyState = document.getElementById('empty-state');
 
             // Sound Notification logic
-            if (lastOrderCount !== -1 && orders.length > lastOrderCount) {
-                // Get the newest order(s)
-                const newOrders = orders.slice(lastOrderCount);
+            const currentIds = new Set(orders.map(o => String(o.id)));
+            if (!isFirstLoad) {
+                const newOrders = orders.filter(o => !knownOrderIds.has(String(o.id)));
                 newOrders.forEach(order => playOrderNotification(order.items));
             }
-            lastOrderCount = orders.length;
+            knownOrderIds = currentIds;
+            isFirstLoad = false;
 
-            if (!orders || orders.length === 0) {
+            // Filter out 'ready' orders from the pending list
+            const pendingOrders = orders.filter(o => o.status !== 'ready');
+
+            if (!pendingOrders || pendingOrders.length === 0) {
                 grid.innerHTML = '';
                 orderCards.clear();
                 emptyState.classList.remove('hidden');
@@ -418,25 +461,24 @@
             }
 
             emptyState.classList.add('hidden');
-            const currentIds = new Set(orders.map(o => String(o.id)));
-
+            
             // Remove stale cards
+            const pendingIds = new Set(pendingOrders.map(o => String(o.id)));
             for (const [id, element] of orderCards.entries()) {
-                if (!currentIds.has(id)) {
+                if (!pendingIds.has(id)) {
                     element.remove();
                     orderCards.delete(id);
                 }
             }
 
             // Update or Add
-            [...orders].reverse().forEach((order) => {
+            [...pendingOrders].reverse().forEach((order) => {
                 const id = String(order.id);
-                const isReady = order.status === 'ready';
-                const stateJson = JSON.stringify({ status: order.status, items: order.items.length });
+                const statusJson = JSON.stringify({ status: order.status, items: order.items.length });
                 
                 let card = orderCards.get(id);
                 if (card) {
-                    if (card.dataset.state === stateJson) return;
+                    if (card.dataset.state === statusJson) return;
                 } else {
                     card = document.createElement('div');
                     card.id = `order-${id}`;
@@ -444,8 +486,8 @@
                     orderCards.set(id, card);
                 }
 
-                card.dataset.state = stateJson;
-                card.className = `order-card card !p-0 overflow-hidden transition-all duration-300 ${isReady ? 'ring-2 ring-green-500 shadow-lg shadow-green-100' : ''}`;
+                card.dataset.state = statusJson;
+                card.className = `order-card card !p-0 overflow-hidden transition-all duration-300`;
                 
                 let itemsHtml = order.items.map(item => `
                     <div class="flex justify-between items-start py-2 border-b border-gray-50 last:border-0">
@@ -465,7 +507,6 @@
                                 <button onclick="speakOrder('${order.id}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-coffee/10 hover:text-coffee flex items-center justify-center transition-all">
                                     <i class="fas fa-volume-up text-xs"></i>
                                 </button>
-                                ${isReady ? `<span class="bg-green-600 text-white px-3 py-1.5 rounded-xl font-bold text-[9px]">SIAP DIAMBIL</span>` : ''}
                             </div>
                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${order.time}</span>
                         </div>
@@ -511,6 +552,7 @@
                     </div>
                 `;
             });
+
         } catch (error) {
             console.error('Error loading orders:', error);
         }
@@ -670,6 +712,16 @@
             window.showToast('Laporan keuangan telah direset.');
             loadReport();
         }
+    }
+
+    function printReport() {
+        const printContents = document.getElementById('report-section').innerHTML;
+        const originalContents = document.body.innerHTML;
+        
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        location.reload();
     }
 
     // --- Cashier Scan & Cart Logic ---
@@ -949,6 +1001,7 @@
                 options: null // Direct additions from cashier
             });
         }
+        window.gestureTargetIndex = cashierCart.length - 1;
         updateCashierCartUI();
         window.showToast(`Berhasil menambahkan ${menu.name} ke keranjang!`);
     }
@@ -975,12 +1028,24 @@
 
     function clearCashierCart() {
         cashierCart = [];
+        window.gestureTargetIndex = -1;
         updateCashierCartUI();
     }
+
+    // Export to window for gesture module
+    window.getCashierCart = () => cashierCart;
+    window.addCashierCartQty = addCashierCartQty;
+    window.removeCashierCartQty = removeCashierCartQty;
+    window.updateCashierCartUI = updateCashierCartUI;
+    window.gestureTargetIndex = -1;
 
     function updateCashierCartUI() {
         const container = document.getElementById('cashier-cart-items');
         if (!container) return;
+
+        if (window.gestureTargetIndex >= cashierCart.length) {
+            window.gestureTargetIndex = cashierCart.length - 1;
+        }
 
         container.innerHTML = '';
         if (cashierCart.length === 0) {
@@ -992,9 +1057,12 @@
         }
 
         let subtotal = 0;
-        cashierCart.forEach(item => {
+        cashierCart.forEach((item, index) => {
+            if (window.gestureTargetIndex === -1 && index === cashierCart.length - 1) window.gestureTargetIndex = index;
+            const isTargeted = (window.gestureTargetIndex === index);
+            
             const row = document.createElement('div');
-            row.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 shadow-sm';
+            row.className = `flex justify-between items-center p-3 rounded-xl border shadow-sm transition-all ${isTargeted ? 'bg-indigo-50 border-indigo-300 ring-1 ring-indigo-300' : 'bg-gray-50 border-gray-100'}`;
             row.innerHTML = `
                 <div class="flex-grow">
                     <p class="font-bold text-xs text-gray-800">${item.name}</p>
@@ -1060,7 +1128,10 @@
                 document.getElementById('cashier-table').value = '';
                 showSection('orders');
             } else {
-                window.showToast('Gagal membuat pesanan.', 'error');
+                const errorData = await response.json();
+                const errorMessage = errorData.message || 'Gagal membuat pesanan.';
+                window.showToast('Gagal: ' + errorMessage, 'error');
+                console.error('Submission error:', errorData);
             }
         } catch (error) {
             console.error('Error submitting cashier order:', error);
@@ -1077,5 +1148,178 @@
             loadReport();
         }
     }, 5000);
+</script>
+
+<script type="module">
+import { GestureRecognizer, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
+
+window.gestureRecognizer = null;
+let webcamRunning = false;
+const video = document.getElementById("gesture-video");
+const canvasElement = document.getElementById("gesture-canvas");
+const canvasCtx = canvasElement.getContext("2d");
+const gestureOutput = document.getElementById("gesture-output");
+
+const createGestureRecognizer = async () => {
+    try {
+        const vision = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+        );
+        window.gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
+            baseOptions: {
+                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+                delegate: "GPU"
+            },
+            runningMode: "VIDEO"
+        });
+        if(gestureOutput) gestureOutput.innerText = "Sensor Siap! Lakukan Gesture";
+    } catch(e) {
+        console.error("AI Model error", e);
+        if(gestureOutput) gestureOutput.innerText = "Error memuat Sensor";
+    }
+};
+createGestureRecognizer();
+
+let lastVideoTime = -1;
+let lastGesture = '';
+let gestureCount = 0;
+let actionTriggered = false;
+
+async function predictWebcam() {
+    if (!webcamRunning) return;
+    
+    canvasElement.width = video.videoWidth;
+    canvasElement.height = video.videoHeight;
+    
+    let nowInMs = Date.now();
+    if (video.currentTime !== lastVideoTime && window.gestureRecognizer) {
+        lastVideoTime = video.currentTime;
+        const results = window.gestureRecognizer.recognizeForVideo(video, nowInMs);
+        
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        if (results.gestures.length > 0) {
+            const categoryName = results.gestures[0][0].categoryName;
+            
+            let gName = categoryName;
+            if (categoryName === 'Pointing_Up') gName = '☝️ Telunjuk (Tambah 1)';
+            else if (categoryName === 'Victory') gName = '✌️ Dua Jari (Tambah 2)';
+            else if (categoryName === 'Thumb_Down') gName = '👎 Jempol Bawah (Kurang 1)';
+            else if (categoryName === 'Thumb_Up') gName = '👍 Jempol Atas (Pilih Barang)';
+            else if (categoryName === 'None') gName = 'Tidak ada';
+            else if (categoryName === 'Closed_Fist') gName = '✊ Mengepal (Reset)';
+            else if (categoryName === 'Open_Palm') gName = '✋ Telapak Terbuka';
+            
+            gestureOutput.innerText = `Gesture: ${gName}`;
+            
+            if (categoryName === lastGesture && categoryName !== 'None' && categoryName !== 'Closed_Fist' && categoryName !== 'Open_Palm') {
+                gestureCount++;
+            } else {
+                lastGesture = categoryName;
+                gestureCount = 0;
+                actionTriggered = false;
+            }
+            
+            if (gestureCount >= 15 && !actionTriggered) {
+                actionTriggered = true;
+                triggerGestureAction(categoryName);
+            }
+            
+            if (categoryName === 'Closed_Fist' || categoryName === 'Open_Palm') {
+                actionTriggered = false; 
+            }
+            
+        } else {
+            gestureOutput.innerText = "Mendeteksi...";
+            lastGesture = '';
+            gestureCount = 0;
+        }
+        canvasCtx.restore();
+    }
+    
+    if (webcamRunning) {
+        window.requestAnimationFrame(predictWebcam);
+    }
+}
+
+window.triggerGestureAction = function(gesture) {
+    const cart = window.getCashierCart();
+    if (!cart || cart.length === 0) {
+        window.showToast('Keranjang kosong! Scan barang dulu.', 'error');
+        return;
+    }
+    
+    if (gesture === 'Thumb_Up') {
+        window.gestureTargetIndex--;
+        if (window.gestureTargetIndex < 0) {
+            window.gestureTargetIndex = cart.length - 1;
+        }
+        window.updateCashierCartUI();
+        window.showToast(`Gesture: Memilih ${cart[window.gestureTargetIndex].name}`);
+        return;
+    }
+    
+    let targetIndex = window.gestureTargetIndex !== -1 ? window.gestureTargetIndex : cart.length - 1;
+    if (targetIndex >= cart.length) {
+        targetIndex = cart.length - 1;
+        window.gestureTargetIndex = targetIndex;
+    }
+    
+    const lastItem = cart[targetIndex];
+    if (!lastItem) return;
+    
+    if (gesture === 'Pointing_Up') {
+        window.addCashierCartQty(lastItem.id);
+        window.showToast(`Gesture: Menambah 1 ${lastItem.name}`);
+    } else if (gesture === 'Victory') {
+        window.addCashierCartQty(lastItem.id);
+        window.addCashierCartQty(lastItem.id);
+        window.showToast(`Gesture: Menambah 2 ${lastItem.name}`);
+    } else if (gesture === 'Thumb_Down') {
+        window.removeCashierCartQty(lastItem.id);
+        window.showToast(`Gesture: Mengurangi 1 ${lastItem.name}`);
+        const newCart = window.getCashierCart();
+        if (newCart.length < cart.length) {
+            window.gestureTargetIndex = newCart.length - 1;
+            window.updateCashierCartUI();
+        }
+    }
+}
+
+
+window.toggleGestureCamera = function() {
+    const container = document.getElementById('gesture-scanner-container');
+    const hint = document.getElementById('gesture-hint');
+    const btnText = document.getElementById('gesture-btn-text');
+    
+    if (!window.gestureRecognizer) {
+        window.showToast('Sistem sensor masih memuat, tunggu 2 detik...', 'info');
+        return;
+    }
+    
+    if (!webcamRunning) {
+        webcamRunning = true;
+        container.classList.remove('hidden');
+        hint.classList.remove('hidden');
+        btnText.innerText = 'Tutup Kamera';
+        
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+            video.srcObject = stream;
+            video.addEventListener("loadeddata", predictWebcam);
+        }).catch(err => {
+            console.error(err);
+            window.showToast('Izin kamera ditolak atau kamera tidak tersedia', 'error');
+        });
+    } else {
+        webcamRunning = false;
+        container.classList.add('hidden');
+        hint.classList.add('hidden');
+        btnText.innerText = 'Buka Kamera';
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
+    }
+};
 </script>
 @endpush

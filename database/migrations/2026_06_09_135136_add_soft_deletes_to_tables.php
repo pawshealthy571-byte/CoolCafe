@@ -6,25 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('menus', function (Blueprint $table) {
-            $table->string('barcode_image')->nullable()->after('barcode');
+        Schema::table('users', function (Blueprint $table) {
+            $table->softDeletes();
         });
-
-        \Illuminate\Support\Facades\DB::table('menus')->whereIn('category', ['Snack', 'Minuman'])->update(['category' => 'Snack & Minuman']);
+        Schema::table('menus', function (Blueprint $table) {
+            $table->softDeletes();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn('barcode_image');
+            $table->dropSoftDeletes();
         });
     }
 };

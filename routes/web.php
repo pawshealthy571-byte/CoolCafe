@@ -5,7 +5,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Hash;
+
+function logActivity(string $action, string $description) {
+    if (Auth::check()) {
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => $action,
+            'description' => $description,
+            'ip_address' => request()->ip(),
+        ]);
+    }
+}
 
 Route::get('/', function () {
     return view('welcome');
@@ -38,6 +50,17 @@ Route::get('/chef', function () {
     }
 
     return view('dashboard.chef');
+});
+
+Route::get('/forgot-password', function () {
+    return view('forgot-password');
+});
+
+Route::post('/forgot-password', function (Request $request) {
+    $request->validate(['email' => 'required|email']);
+    // In a real app, send reset link email here.
+    // For now, we simulate success.
+    return back()->with('status', 'Instruksi pemulihan telah dikirim ke email Anda.');
 });
 
 Route::get('/login', function () {
@@ -176,8 +199,14 @@ Route::get('/qris', function (Request $request) {
 });
 
 Route::get('/estimation', function (Request $request) {
+    $ordersCount = count(readCoolCafeOrders());
+    // Estimate: 5 minutes per order, minimum 5-10 mins, maximum added per order
+    $minMinutes = 5 + ($ordersCount * 2);
+    $maxMinutes = 10 + ($ordersCount * 3);
+    
     return view('estimation', [
-        'table' => $request->query('table', '-')
+        'table' => $request->query('table', '-'),
+        'estimation' => "{$minMinutes} - {$maxMinutes} Menit"
     ]);
 });
 
@@ -220,6 +249,7 @@ Route::post('/orders', function (Request $request) {
     ];
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
+    logActivity('Pesanan Baru', "Kasir membuat pesanan untuk Meja {$data['table']}");
 
     return response()->json(['ok' => true]);
 });
@@ -250,6 +280,7 @@ Route::post('/orders/{id}/complete', function ($id) {
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
     Storage::disk('local')->put('coolcafe_sales.json', json_encode($sales, JSON_PRETTY_PRINT));
+    logActivity('Selesaikan Pesanan', "Kasir menyelesaikan pesanan untuk Meja {$order['table']}");
 
     return response()->json(['ok' => true]);
 });
@@ -260,20 +291,21 @@ Route::post('/orders/{id}/ready', function ($id) {
     }
 
     $orders = readCoolCafeOrders();
-    $found = false;
+    $foundOrder = null;
     foreach ($orders as &$order) {
         if ((string) ($order['id'] ?? '') === (string) $id) {
             $order['status'] = 'ready';
-            $found = true;
+            $foundOrder = $order;
             break;
         }
     }
 
-    if (! $found) {
+    if (! $foundOrder) {
         return response()->json(['ok' => false, 'message' => 'Order tidak ditemukan'], 404);
     }
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
+    logActivity('Pesanan Siap', "Chef menandai pesanan Meja {$foundOrder['table']} sebagai siap");
 
     return response()->json(['ok' => true]);
 });
@@ -283,12 +315,18 @@ Route::delete('/orders/{id}', function ($id) {
         return response()->json(['message' => 'Forbidden.'], 403);
     }
 
-    $orders = collect(readCoolCafeOrders())
+    $orders = readCoolCafeOrders();
+    $order = collect($orders)->first(fn ($order) => (string) ($order['id'] ?? '') === (string) $id);
+
+    $orders = collect($orders)
         ->reject(fn ($order) => (string) ($order['id'] ?? '') === (string) $id)
         ->values()
         ->all();
 
     Storage::disk('local')->put('coolcafe_orders.json', json_encode($orders, JSON_PRETTY_PRINT));
+    if ($order) {
+        logActivity('Batalkan Pesanan', "Kasir membatalkan pesanan untuk Meja {$order['table']}");
+    }
 
     return response()->json(['ok' => true]);
 });
@@ -358,6 +396,7 @@ Route::post('/admin/users', function (Request $request) {
     ]);
     $data['password'] = Hash::make($data['password']);
     $user = App\Models\User::create($data);
+    logActivity('Buat Pengguna', "mendaftarkan pengguna baru: {$user->name}");
     return response()->json($user);
 });
 
@@ -386,6 +425,7 @@ Route::delete('/admin/users/{id}', function ($id) {
         return response()->json(['message' => 'Forbidden.'], 403);
     }
     $user = App\Models\User::findOrFail($id);
+    logActivity('Hapus Pengguna', "menghapus akun pengguna: {$user->name}");
     $user->delete();
     return response()->json(['ok' => true]);
 });
@@ -467,6 +507,7 @@ Route::delete('/admin/menus/{id}', function ($id) {
     }
 
     $menu = App\Models\Menu::findOrFail($id);
+    logActivity('Hapus Menu', "menghapus menu: {$menu->name}");
     $menu->delete();
 
     return response()->json(['ok' => true]);
@@ -483,3 +524,104 @@ Route::delete('/sales-report', function () {
 });
 
 require __DIR__.'/voucher.php';
+
+Route::get('/admin/activity-logs', function () {
+    if (! userHasRole(['admin', 'superadmin'])) {
+        return response()->json(['message' => 'Forbidden.'], 403);
+    }
+    return response()->json(ActivityLog::with('user')->latest()->take(50)->get());
+});
+
+Route::get('/admin/management/activity-logs', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.activity_logs');
+});
+
+Route::get('/admin/management/trash', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.trash');
+});
+
+Route::get('/admin/management/backup', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.backup');
+});
+
+Route::get('/api/admin/backup/download', function () {
+    if (! userHasRole(['admin', 'superadmin'])) return response()->json(['message' => 'Forbidden.'], 403);
+
+    $zipFile = storage_path('app/backup_coolcafe_' . now()->format('Y_m_d_His') . '.zip');
+    $zip = new \ZipArchive();
+    
+    if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+        $dbPath = database_path('database.sqlite');
+        if (file_exists($dbPath)) {
+            $zip->addFile($dbPath, 'database.sqlite');
+        }
+        
+        $jsonFiles = ['coolcafe_orders.json', 'coolcafe_sales.json', 'coolcafe_ingredients.json'];
+        foreach ($jsonFiles as $file) {
+            $path = storage_path('app/' . $file);
+            if (file_exists($path)) {
+                $zip->addFile($path, $file);
+            }
+        }
+        
+        $zip->close();
+    }
+    
+    logActivity('Backup Database', 'mengunduh salinan backup database sistem');
+    
+    return response()->download($zipFile)->deleteFileAfterSend(true);
+});
+
+Route::get('/api/admin/trash', function () {
+    if (! userHasRole(['admin', 'superadmin'])) return response()->json(['message' => 'Forbidden.'], 403);
+    return response()->json([
+        'menus' => App\Models\Menu::onlyTrashed()->get(),
+        'users' => App\Models\User::onlyTrashed()->where('id', '!=', Auth::id())->get()
+    ]);
+});
+
+Route::post('/api/admin/trash/restore', function (Illuminate\Http\Request $request) {
+    if (! userHasRole(['admin', 'superadmin'])) return response()->json(['message' => 'Forbidden.'], 403);
+    $type = $request->input('type');
+    $id = $request->input('id');
+    if ($type === 'menu') {
+        $menu = App\Models\Menu::onlyTrashed()->findOrFail($id);
+        $menu->restore();
+        logActivity('Restore Menu', "memulihkan menu: {$menu->name}");
+    } else if ($type === 'user') {
+        $user = App\Models\User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+        logActivity('Restore Pengguna', "memulihkan akun pengguna: {$user->name}");
+    }
+    return response()->json(['ok' => true]);
+});
+
+Route::delete('/api/admin/trash/force-delete', function (Illuminate\Http\Request $request) {
+    if (! userHasRole(['admin', 'superadmin'])) return response()->json(['message' => 'Forbidden.'], 403);
+    $type = $request->input('type');
+    $id = $request->input('id');
+    if ($type === 'menu') {
+        $menu = App\Models\Menu::onlyTrashed()->findOrFail($id);
+        $name = $menu->name;
+        $menu->forceDelete();
+        logActivity('Hapus Permanen Menu', "menghapus permanen menu: {$name}");
+    } else if ($type === 'user') {
+        $user = App\Models\User::onlyTrashed()->findOrFail($id);
+        $name = $user->name;
+        $user->forceDelete();
+        logActivity('Hapus Permanen Pengguna', "menghapus permanen pengguna: {$name}");
+    }
+    return response()->json(['ok' => true]);
+});
+
+Route::post('/api/chef/notify-restock', function (Illuminate\Http\Request $request) {
+    if (! userHasRole(['chef', 'admin', 'superadmin', 'manager'])) return response()->json(['message' => 'Forbidden.'], 403);
+    
+    $items = $request->input('items', 'beberapa bahan baku');
+    logActivity('Permintaan Restock', "Mendesak: Chef meminta pembelian ulang untuk bahan baku berikut: {$items}.");
+    
+    return response()->json(['ok' => true]);
+});

@@ -19,7 +19,7 @@
             </div>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Pesanan Aktif</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $activeOrders }}</p>
+                <p class="text-xl 2xl:text-2xl font-bold text-gray-800 truncate">{{ $activeOrders }}</p>
             </div>
         </div>
     </div>
@@ -31,7 +31,7 @@
             </div>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Omzet Hari Ini</p>
-                <p class="text-2xl font-bold text-coffee">Rp {{ number_format($todayRevenue, 0, ',', '.') }}</p>
+                <p class="text-xl 2xl:text-2xl font-bold text-coffee truncate" title="Rp {{ number_format($todayRevenue, 0, ',', '.') }}">Rp {{ number_format($todayRevenue, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
             </div>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Transaksi</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $todayTransactions }}</p>
+                <p class="text-xl 2xl:text-2xl font-bold text-gray-800 truncate">{{ $todayTransactions }}</p>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@
             </div>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Total Omzet</p>
-                <p class="text-2xl font-bold text-coffee">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
+                <p class="text-xl 2xl:text-2xl font-bold text-coffee truncate" title="Rp {{ number_format($totalRevenue, 0, ',', '.') }}">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>
@@ -67,7 +67,7 @@
             </div>
             <div class="min-w-0">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">Total Pengeluaran</p>
-                <p class="text-2xl font-bold text-red-600">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</p>
+                <p class="text-xl 2xl:text-2xl font-bold text-red-600 truncate" title="Rp {{ number_format($totalExpenses, 0, ',', '.') }}">Rp {{ number_format($totalExpenses, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>
@@ -85,6 +85,13 @@
         </div>
     </section>
 </div>
+
+<section class="card mt-8">
+    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-history text-coffee"></i> Riwayat Aktivitas Sistem</h3>
+    <div id="activity-logs-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+        <p class="text-xs text-gray-400 text-center py-4">Memuat riwayat aktivitas...</p>
+    </div>
+</section>
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -112,6 +119,30 @@
         const lowStock = ingredients.filter(i => i.stock < 10);
         const list = document.getElementById('low-stock-list');
         list.innerHTML = lowStock.length ? lowStock.map(i => `<div class="p-2 bg-red-50 text-red-600 rounded text-xs font-bold">${i.name}: ${i.stock} ${i.unit}</div>`).join('') : '<p class="text-xs text-gray-400">Semua stok aman.</p>';
+
+        // Load Activity Logs
+        try {
+            const logsResp = await fetch('/admin/activity-logs');
+            const logs = await logsResp.json();
+            const logContainer = document.getElementById('activity-logs-list');
+            if (logs.length > 0) {
+                logContainer.innerHTML = logs.map(log => `
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0 mt-1">
+                            <i class="fas fa-user-circle text-gray-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-800"><b>${log.user ? log.user.name : 'Sistem'}</b> <span class="text-gray-500">${log.description}</span></p>
+                            <p class="text-[9px] text-gray-400 mt-0.5">${new Date(log.created_at).toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                logContainer.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Belum ada aktivitas tercatat.</p>';
+            }
+        } catch (error) {
+            console.error('Failed to load activity logs:', error);
+        }
     }
     initDashboard();
 </script>

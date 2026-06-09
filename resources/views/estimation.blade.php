@@ -88,14 +88,14 @@
                 </div>
                 <div class="text-right">
                     <span class="text-[9px] uppercase tracking-wider text-coffee-600 font-bold block">Estimasi Tunggu</span>
-                    <span class="text-lg font-serif font-bold text-coffee-800">10 - 15 Menit</span>
+                    <span class="text-lg font-serif font-bold text-coffee-800">{{ $estimation }}</span>
                 </div>
             </div>
             
             <!-- Process steps -->
             <div class="relative pl-8 space-y-6 before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-coffee-100">
                 <!-- Step 1: Active/Done -->
-                <div class="relative flex items-start gap-4">
+                <div id="step-pending" class="relative flex items-start gap-4">
                     <div class="absolute -left-8 w-7 h-7 rounded-full bg-emerald-50 border border-emerald-250 text-emerald-500 flex items-center justify-center text-[10px] z-10">
                         <i class="fas fa-check"></i>
                     </div>
@@ -106,7 +106,7 @@
                 </div>
                 
                 <!-- Step 2: Preparing -->
-                <div class="relative flex items-start gap-4">
+                <div id="step-preparing" class="relative flex items-start gap-4">
                     <div class="absolute -left-8 w-7 h-7 rounded-full bg-coffee-100 border border-coffee-250 text-coffee-700 flex items-center justify-center text-[10px] z-10 animate-pulse">
                         <i class="fas fa-fire-burner"></i>
                     </div>
@@ -117,7 +117,7 @@
                 </div>
                 
                 <!-- Step 3: Serve -->
-                <div class="relative flex items-start gap-4 opacity-40">
+                <div id="step-ready" class="relative flex items-start gap-4 opacity-40">
                     <div class="absolute -left-8 w-7 h-7 rounded-full bg-coffee-50/50 border border-coffee-100 text-coffee-400 flex items-center justify-center text-[10px] z-10">
                         <i class="fas fa-concierge-bell"></i>
                     </div>
@@ -128,6 +128,28 @@
                 </div>
             </div>
         </div>
+        
+        <script>
+            function checkStatus() {
+                fetch('/orders')
+                    .then(res => res.json())
+                    .then(orders => {
+                        // Assuming the table number identifies the order uniquely for this view
+                        const table = '{{ $table }}';
+                        const order = orders.find(o => String(o.table) === String(table));
+                        
+                        if (order && order.status === 'ready') {
+                            document.getElementById('step-preparing').classList.add('opacity-40');
+                            document.getElementById('step-preparing').querySelector('div').classList.remove('animate-pulse');
+                            document.getElementById('step-ready').classList.remove('opacity-40');
+                            document.getElementById('step-ready').querySelector('div').classList.add('bg-emerald-50', 'border-emerald-250', 'text-emerald-500');
+                        }
+                    });
+            }
+            setInterval(checkStatus, 5000);
+            checkStatus();
+        </script>
+
         
         <div class="pt-4 space-y-8">
             <a href="/menu" class="inline-flex items-center gap-2 text-xs font-bold text-coffee-700 hover:text-coffee-900 transition-colors">

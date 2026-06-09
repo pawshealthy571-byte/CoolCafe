@@ -98,7 +98,7 @@ body {
     }
 
     .category-pill {
-        @apply whitespace-nowrap px-6 py-2.5 rounded-full border border-coffee-200 text-sm font-semibold text-coffee-700 bg-white/70 transition-all hover:bg-white hover:border-coffee-400 cursor-pointer;
+        @apply whitespace-nowrap px-4 py-2 rounded-xl border border-coffee-200 text-xs font-bold text-coffee-700 bg-white/70 transition-all hover:bg-white hover:border-coffee-400 cursor-pointer;
     }
 
     .category-pill.active {

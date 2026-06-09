@@ -23,7 +23,8 @@
         <button type="button" onclick="filterMenuCategory('all')" data-menu-filter="all" class="menu-filter bg-coffee text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Semua</button>
         <button type="button" onclick="filterMenuCategory('Paket')" data-menu-filter="Paket" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Paket</button>
         <button type="button" onclick="filterMenuCategory('Bakery')" data-menu-filter="Bakery" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Bakery</button>
-        <button type="button" onclick="filterMenuCategory('Snack & Minuman')" data-menu-filter="Snack & Minuman" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Snack & Minuman</button>
+        <button type="button" onclick="filterMenuCategory('Snack')" data-menu-filter="Snack" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Snack</button>
+        <button type="button" onclick="filterMenuCategory('Minuman')" data-menu-filter="Minuman" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Minuman</button>
         <button type="button" onclick="filterMenuCategory('Main Course')" data-menu-filter="Main Course" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Main Course</button>
     </div>
 
@@ -67,7 +68,8 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kategori</label>
                 <select id="menu-category" required onchange="toggleAddOnField()" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
                     <option value="Bakery">Bakery</option>
-                    <option value="Snack & Minuman">Snack & Minuman</option>
+                    <option value="Snack">Snack</option>
+                    <option value="Minuman">Minuman</option>
                     <option value="Main Course">Main Course</option>
                     <option value="Paket">Paket</option>
                 </select>

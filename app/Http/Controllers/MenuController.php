@@ -48,6 +48,13 @@ class MenuController extends Controller
 
         $menu = Menu::create($data);
 
+        \App\Models\ActivityLog::create([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'action' => 'Buat Menu',
+            'description' => "menambahkan menu baru: {$menu->name}",
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json($menu);
     }
 
@@ -92,6 +99,13 @@ class MenuController extends Controller
         unset($data['barcode_image_file']);
 
         $menu->update($data);
+
+        \App\Models\ActivityLog::create([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'action' => 'Update Menu',
+            'description' => "mengubah menu: {$menu->name}",
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json($menu);
     }

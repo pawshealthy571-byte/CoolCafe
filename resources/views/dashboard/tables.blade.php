@@ -3,9 +3,14 @@
 @section('title', 'Manajemen Meja & QR')
 
 @section('content')
-<div class="mb-8">
-    <h2 class="text-2xl font-bold text-gray-800">Manajemen Meja & QR</h2>
-    <p class="text-gray-500 text-sm">Kelola daftar meja dan cetak QR Code untuk setiap meja.</p>
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">Manajemen Meja & QR</h2>
+        <p class="text-gray-500 text-sm">Kelola daftar meja dan cetak QR Code untuk setiap meja.</p>
+    </div>
+    <a href="/menu" target="_blank" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-200 transition-all">
+        Lihat Menu
+    </a>
 </div>
 
 <div class="card p-6">
@@ -42,7 +47,10 @@
         container.innerHTML = tables.map(table => `
             <div class="border border-coffee-100 rounded-xl p-4 text-center hover:shadow-md transition-shadow">
                 <p class="text-3xl font-bold text-coffee mb-2">#${table}</p>
-                <button onclick="showQr(${table})" class="text-xs bg-coffee-50 text-coffee px-3 py-1.5 rounded-lg font-bold">Lihat QR</button>
+                <div class="flex flex-col gap-2">
+                    <button onclick="showQr(${table})" class="text-xs bg-coffee-50 text-coffee px-3 py-1.5 rounded-lg font-bold">Lihat QR</button>
+                    <a href="/menu?table=${table}" target="_blank" class="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg font-bold hover:bg-gray-200">Buka Menu</a>
+                </div>
             </div>
         `).join('');
     }

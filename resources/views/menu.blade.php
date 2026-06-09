@@ -90,8 +90,8 @@
     </div>
 
     <!-- Header & Table Info -->
-    <header class="sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-coffee-950/5 p-4 mb-6">
-        <div class="max-w-md mx-auto flex justify-between items-center mb-4">
+    <header class="sticky top-0 z-40 bg-white/70 backdrop-blur-md border-b border-coffee-950/5 p-4 mb-6 w-full">
+        <div class="w-full max-w-md mx-auto flex justify-between items-center mb-4">
             <div>
                 <h1 class="font-serif text-2xl font-bold text-coffee-950 tracking-tight">CoolCafe</h1>
                 <p class="text-[10px] text-coffee-600 uppercase tracking-widest font-bold">Digital Menu & Ordering</p>
@@ -102,21 +102,21 @@
             </div>
         </div>
         
-        <div class="max-w-md mx-auto grid grid-cols-12 gap-3">
+        <div class="w-full max-w-md mx-auto flex items-center gap-3 px-4">
             <!-- Hidden Table Number -->
             <input type="hidden" id="table-number" value="">
             
             <!-- Table Number Display (Visible) -->
-            <div id="table-display" class="col-span-3 bg-coffee-50 rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center justify-center gap-2 hidden">
-                <i class="fas fa-chair text-coffee-500 text-xs"></i>
-                <span id="table-number-text" class="text-xs font-bold text-coffee-950"></span>
+            <div id="table-display" class="bg-coffee-50 rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center justify-center gap-1.5 hidden shrink-0">
+                <i class="fas fa-chair text-coffee-500 text-[10px]"></i>
+                <span id="table-number-text" class="text-[10px] font-bold text-coffee-950 truncate"></span>
             </div>
             
-            <!-- Search Bar (Adjusted width) -->
-            <div id="search-bar" class="col-span-12 bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2">
-                <i class="fas fa-search text-coffee-400 text-xs"></i>
-                <input type="text" id="search-input" oninput="searchMenu()" placeholder="Cari kopi, roti..." class="w-full bg-transparent focus:outline-none text-xs font-semibold text-coffee-900">
-                <button type="button" onclick="startVoiceSearch()" id="voice-search-btn" class="text-coffee-400 hover:text-coffee transition-colors">
+            <!-- Search Bar -->
+            <div id="search-bar" class="flex-grow bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2 min-w-0">
+                <i class="fas fa-search text-coffee-400 text-xs flex-shrink-0"></i>
+                <input type="text" id="search-input" oninput="searchMenu()" placeholder="Cari..." class="w-full bg-transparent focus:outline-none text-xs font-semibold text-coffee-900 min-w-0">
+                <button type="button" onclick="startVoiceSearch()" id="voice-search-btn" class="text-coffee-400 hover:text-coffee transition-colors flex-shrink-0">
                     <i class="fas fa-microphone text-xs"></i>
                 </button>
             </div>
@@ -124,23 +124,23 @@
     </header>
 
     <!-- Categories Navigation -->
-    <div class="max-w-md mx-auto mb-6">
-        <nav class="flex overflow-x-auto gap-2.5 px-4 no-scrollbar">
-            <button onclick="filterCategory('all', this)" class="category-pill active">Semua</button>
-            <button onclick="filterCategory('Bakery', this)" class="category-pill">Bakery</button>
-            <button onclick="filterCategory('Minuman', this)" class="category-pill">Minuman</button>
-            <button onclick="filterCategory('Main Course', this)" class="category-pill font-medium">Main Course</button>
-            <button onclick="filterCategory('Paket', this)" class="category-pill">Paket</button>
+    <div class="w-full max-w-md mx-auto mb-6">
+        <nav class="flex overflow-x-auto gap-2 no-scrollbar px-4 pb-2">
+            <button onclick="filterCategory('all', this)" class="category-pill active shrink-0">Semua</button>
+            <button onclick="filterCategory('Bakery', this)" class="category-pill shrink-0">Bakery</button>
+            <button onclick="filterCategory('Minuman', this)" class="category-pill shrink-0">Minuman</button>
+            <button onclick="filterCategory('Main Course', this)" class="category-pill shrink-0">Main Course</button>
+            <button onclick="filterCategory('Paket', this)" class="category-pill shrink-0">Paket</button>
         </nav>
     </div>
 
     <!-- Menu List -->
-    <div class="max-w-md mx-auto px-4">
+    <div class="w-full max-w-md mx-auto px-4">
         <div id="menu-container" class="space-y-4">
             @foreach($menus as $menu)
-            <div class="menu-item" data-category="{{ $menu->category }}" data-barcode="{{ $menu->barcode }}">
-                <div class="card p-3.5 flex gap-4 bg-white">
-                    <div class="w-24 h-24 bg-coffee-50 border border-coffee-950/5 rounded-2xl overflow-hidden flex-shrink-0 relative group">
+            <div class="menu-item w-full" data-category="{{ $menu->category }}" data-barcode="{{ $menu->barcode }}">
+                <div class="card p-3 flex gap-3 bg-white w-full rounded-2xl">
+                    <div class="w-20 h-20 bg-coffee-50 border border-coffee-950/5 rounded-xl overflow-hidden flex-shrink-0 relative group">
                         @php
                             $imageUrl = $menu->image ?? 'https://placehold.co/200x200?text=No+Image';
                             if ($menu->image && !str_starts_with($menu->image, 'http')) {
@@ -149,15 +149,18 @@
                         @endphp
                         <img src="{{ $imageUrl }}" alt="{{ $menu->name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                     </div>
-                    <div class="flex flex-col justify-between flex-grow">
-                        <div class="space-y-1">
+                    <div class="flex flex-col justify-between flex-grow min-w-0">
+                        <div class="space-y-0.5">
                             <div class="flex justify-between items-start">
-                                <h3 class="font-serif font-bold text-coffee-950 text-sm leading-snug">{{ $menu->name }}</h3>
+                                <h3 class="font-serif font-bold text-coffee-950 text-sm leading-snug truncate">{{ $menu->name }}</h3>
+                                <button onclick="speakText('{{ addslashes($menu->name) }}. {{ addslashes($menu->description) }}. Harga: {{ number_format($menu->price, 0, ',', '') }} Rupiah.')" class="text-coffee-300 hover:text-coffee transition-colors ml-1 flex-shrink-0" title="Dengarkan detail menu">
+                                    <i class="fas fa-volume-up text-[10px] bg-coffee-50 p-1.5 rounded-full"></i>
+                                </button>
                             </div>
-                            <p class="text-[11px] text-coffee-700/80 leading-relaxed line-clamp-2">{{ $menu->description }}</p>
+                            <p class="text-[10px] text-coffee-700/80 leading-relaxed line-clamp-2">{{ $menu->description }}</p>
                         </div>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="font-serif font-bold text-coffee-800 text-sm">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="font-serif font-bold text-coffee-800 text-xs truncate">Rp {{ number_format($menu->price, 0, ',', '.') }}</span>
                             <!-- Action Wrapper -->
                             <div class="menu-action-wrapper" 
                                  data-name="{{ $menu->name }}" 
@@ -344,8 +347,6 @@
                 document.getElementById('table-number').value = table;
                 document.getElementById('table-number-text').innerText = 'Meja ' + table;
                 document.getElementById('table-display').classList.remove('hidden');
-                document.getElementById('search-bar').classList.remove('col-span-12');
-                document.getElementById('search-bar').classList.add('col-span-9');
             } else {
                 // Optionally show a warning if no table is found
                 showToast('Nomor meja tidak ditemukan. Mohon scan ulang QR code.', 'error');
@@ -366,6 +367,19 @@
                 });
             });
         });
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9; // Slightly slower for clarity
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast('Browser Anda tidak mendukung fitur suara.', 'error');
+            }
+        }
 
         function showConfirm({ title = 'Konfirmasi', message = '', detail = '', okText = 'Lanjut', cancelText = 'Batal' }) {
             const modal = document.getElementById('confirm-modal');

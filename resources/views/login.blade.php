@@ -71,7 +71,7 @@
                     <input type="checkbox" name="remember" value="1" class="rounded border-coffee-200 text-coffee focus:ring-coffee w-3.5 h-3.5">
                     <span>Ingat saya</span>
                 </label>
-                <a href="#" class="tracking-widest hover:text-coffee-950 transition-colors">Lupa Password?</a>
+                <a href="/forgot-password" class="tracking-widest hover:text-coffee-950 transition-colors">Lupa Password?</a>
             </div>
 
             <!-- Submit -->
