@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 Route::get('/', function () {
     return view('welcome');
@@ -61,35 +62,6 @@ Route::get('/login/pegawai', fn() => redirect('/login'));
 Route::get('/login/admin', fn() => redirect('/login'));
 Route::get('/login/kasir', fn() => redirect('/login'));
 Route::get('/login/chef', fn() => redirect('/login'));
-
-function attemptRoleLogin(Request $request, array $roles, string $redirectTo)
-{
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required', 'string'],
-    ]);
-
-    if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-        return back()
-            ->withErrors(['email' => 'Email atau password salah.'])
-            ->onlyInput('email');
-    }
-
-    if (! in_array(Auth::user()->role, $roles, true)) {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return back()
-            ->withErrors(['email' => 'Akun ini tidak memiliki akses ke portal ini.'])
-            ->onlyInput('email');
-    }
-
-    $request->session()->regenerate();
-
-    return redirect()->intended($redirectTo);
-}
 
 Route::post('/logout', function (Request $request) {
     Auth::logout();
@@ -331,6 +303,11 @@ Route::delete('/orders', function () {
     return response()->json(['ok' => true]);
 });
 
+Route::get('/admin/management/tables', function () {
+    if (! userHasRole(['admin', 'superadmin'])) abort(403);
+    return view('dashboard.tables');
+});
+
 Route::get('/admin/management/users', function () {
     if (! userHasRole(['admin', 'superadmin'])) abort(403);
     return view('dashboard.users.index');
@@ -505,92 +482,4 @@ Route::delete('/sales-report', function () {
     return response()->json(['ok' => true]);
 });
 
-function readCoolCafeOrders(): array
-{
-    if (! Storage::disk('local')->exists('coolcafe_orders.json')) {
-        return [];
-    }
-
-    $orders = json_decode(Storage::disk('local')->get('coolcafe_orders.json'), true);
-
-    return is_array($orders) ? $orders : [];
-}
-
-function storeMenuImage(Request $request, array &$data, ?App\Models\Menu $menu = null): ?string
-{
-    $uploadedImage = $request->file('image_file');
-
-    if (! $uploadedImage) {
-        return null;
-    }
-
-    if (! $uploadedImage->isValid()) {
-        return 'Upload gambar gagal: '.$uploadedImage->getErrorMessage();
-    }
-
-    if ($menu?->image && ! str_starts_with($menu->image, 'http')) {
-        Storage::disk('public')->delete($menu->image);
-    }
-
-    $data['image'] = $uploadedImage->store('menus', 'public');
-
-    return null;
-}
-
-function userHasRole(array $roles): bool
-{
-    return Auth::check() && in_array(Auth::user()->role, $roles, true);
-}
-
 require __DIR__.'/voucher.php';
-
-function readCoolCafeSales(): array
-{
-    if (! Storage::disk('local')->exists('coolcafe_sales.json')) {
-        return [];
-    }
-
-    $sales = json_decode(Storage::disk('local')->get('coolcafe_sales.json'), true);
-
-    return is_array($sales) ? $sales : [];
-}
-
-function readCoolCafeVouchers(): array
-{
-    if (! Storage::disk('local')->exists('coolcafe_vouchers.json')) {
-        return [];
-    }
-
-    $vouchers = json_decode(Storage::disk('local')->get('coolcafe_vouchers.json'), true);
-
-    return is_array($vouchers) ? $vouchers : [];
-}
-
-function writeCoolCafeVouchers(array $vouchers): void
-{
-    Storage::disk('local')->put('coolcafe_vouchers.json', json_encode($vouchers, JSON_PRETTY_PRINT));
-}
-
-function readCoolCafeIngredients(): array
-{
-    if (! Storage::disk('local')->exists('coolcafe_ingredients.json')) {
-        return [];
-    }
-
-    $ingredients = json_decode(Storage::disk('local')->get('coolcafe_ingredients.json'), true);
-
-    return is_array($ingredients) ? $ingredients : [];
-}
-
-function readCoolCafeExpenses(): array
-{
-    if (! Storage::disk('local')->exists('coolcafe_expenses.json')) {
-        return [];
-    }
-
-    $expenses = json_decode(Storage::disk('local')->get('coolcafe_expenses.json'), true);
-
-    return is_array($expenses) ? $expenses : [];
-}
-
-

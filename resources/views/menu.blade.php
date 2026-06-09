@@ -103,14 +103,17 @@
         </div>
         
         <div class="max-w-md mx-auto grid grid-cols-12 gap-3">
-            <!-- Table Select -->
-            <div class="col-span-4 bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2">
-                <i class="fas fa-chair text-coffee-400 text-xs"></i>
-                <input type="number" id="table-number" placeholder="Meja" class="w-full bg-transparent focus:outline-none text-xs font-bold text-coffee-950" min="1">
+            <!-- Hidden Table Number -->
+            <input type="hidden" id="table-number" value="">
+            
+            <!-- Table Number Display (Visible) -->
+            <div id="table-display" class="col-span-3 bg-coffee-50 rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center justify-center gap-2 hidden">
+                <i class="fas fa-chair text-coffee-500 text-xs"></i>
+                <span id="table-number-text" class="text-xs font-bold text-coffee-950"></span>
             </div>
             
-            <!-- Search Bar -->
-            <div class="col-span-8 bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2">
+            <!-- Search Bar (Adjusted width) -->
+            <div id="search-bar" class="col-span-12 bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2">
                 <i class="fas fa-search text-coffee-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="searchMenu()" placeholder="Cari kopi, roti..." class="w-full bg-transparent focus:outline-none text-xs font-semibold text-coffee-900">
                 <button type="button" onclick="startVoiceSearch()" id="voice-search-btn" class="text-coffee-400 hover:text-coffee transition-colors">
@@ -333,6 +336,21 @@
         let toastTimer = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Get table from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const table = urlParams.get('table');
+            
+            if (table) {
+                document.getElementById('table-number').value = table;
+                document.getElementById('table-number-text').innerText = 'Meja ' + table;
+                document.getElementById('table-display').classList.remove('hidden');
+                document.getElementById('search-bar').classList.remove('col-span-12');
+                document.getElementById('search-bar').classList.add('col-span-9');
+            } else {
+                // Optionally show a warning if no table is found
+                showToast('Nomor meja tidak ditemukan. Mohon scan ulang QR code.', 'error');
+            }
+
             updateMenuStepperUI();
             
             // Listen to backdrop clicks on sheets
@@ -790,7 +808,9 @@
                     cart = []; 
                     updateCartUI(); 
                     toggleCart();
-                    document.getElementById('table-number').value = '';
+                    
+                    // Keep table number persistent for the session
+                    document.getElementById('table-number').value = tableNum;
                     document.getElementById('order-note').value = '';
 
                     if (payment === 'QRIS') {
