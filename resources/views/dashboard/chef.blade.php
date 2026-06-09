@@ -43,6 +43,9 @@
         <p class="text-gray-500 text-sm">Kelola antrean pesanan yang harus dimasak.</p>
     </div>
     <div class="flex items-center gap-2">
+        <button id="sound-toggle" onclick="toggleSound()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-2">
+            <i class="fas fa-volume-mute"></i> <span>Suara Off</span>
+        </button>
         <span class="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold">
             <i class="fas fa-fire-burner mr-2"></i>Kitchen Mode
         </span>
@@ -74,6 +77,68 @@
 @push('scripts')
 <script>
     const orderCards = new Map();
+    let lastOrderCount = -1;
+    let soundEnabled = false;
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        const btn = document.getElementById('sound-toggle');
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('span');
+        
+        if (soundEnabled) {
+            btn.classList.add('text-coffee');
+            btn.classList.remove('text-gray-500');
+            icon.className = 'fas fa-volume-up';
+            text.innerText = 'Suara On';
+            // Play a silent sound to unlock audio
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+            window.showToast('Notifikasi suara diaktifkan');
+        } else {
+            btn.classList.remove('text-coffee');
+            btn.classList.add('text-gray-500');
+            icon.className = 'fas fa-volume-mute';
+            text.innerText = 'Suara Off';
+            window.showToast('Notifikasi suara dimatikan');
+        }
+    }
+
+    function playOrderNotification(items = []) {
+        if (soundEnabled && 'speechSynthesis' in window) {
+            let text = 'Pesanan baru masuk. ';
+            if (items.length > 0) {
+                const itemNames = items.map(i => i.name).join(', ');
+                text += 'Isinya: ' + itemNames;
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function speakOrder(id) {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            return;
+        }
+        
+        const card = orderCards.get(String(id));
+        if (!card) return;
+        
+        const names = Array.from(card.querySelectorAll('.text-sm.font-bold.text-gray-800'))
+            .filter(el => el.innerText.includes(' x'))
+            .map(el => el.innerText.split(' x')[0].trim());
+        
+        if (names.length > 0) {
+            const text = 'Pesanan meja ' + card.querySelector('.bg-coffee').innerText.replace('Meja ', '') + '. Isinya: ' + names.join(', ');
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            window.speechSynthesis.speak(utterance);
+        }
+    }
 
     async function loadOrders() {
         try {
@@ -83,6 +148,13 @@
             const orders = await response.json();
             const grid = document.getElementById('orders-grid');
             const emptyState = document.getElementById('empty-state');
+
+            // Sound Notification logic
+            if (lastOrderCount !== -1 && orders.length > lastOrderCount) {
+                const newOrders = orders.slice(lastOrderCount);
+                newOrders.forEach(order => playOrderNotification(order.items));
+            }
+            lastOrderCount = orders.length;
 
             if (!orders || orders.length === 0) {
                 grid.innerHTML = '';
@@ -138,7 +210,12 @@
                 card.innerHTML = `
                     <div class="p-5">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="bg-coffee text-white px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">Meja ${order.table}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-coffee text-white px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">Meja ${order.table}</span>
+                                <button onclick="speakOrder('${order.id}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-coffee/10 hover:text-coffee flex items-center justify-center transition-all">
+                                    <i class="fas fa-volume-up text-xs"></i>
+                                </button>
+                            </div>
                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${order.time}</span>
                         </div>
                         <div class="mb-4">

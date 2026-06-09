@@ -66,6 +66,9 @@
         <p id="section-desc" class="text-gray-500 text-sm">Monitor pesanan pelanggan secara real-time.</p>
     </div>
     <div class="flex items-center gap-2 bg-gray-100 p-1.5 rounded-2xl">
+        <button id="sound-toggle" onclick="toggleSound()" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-2">
+            <i class="fas fa-volume-mute"></i> <span>Suara Off</span>
+        </button>
         <button onclick="showSection('orders')" id="orders-tab" class="px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-coffee">
             Pesanan
         </button>
@@ -280,6 +283,69 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     let activeSection = 'orders';
+    let lastOrderCount = -1;
+    let soundEnabled = false;
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        const btn = document.getElementById('sound-toggle');
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('span');
+        
+        if (soundEnabled) {
+            btn.classList.add('text-coffee');
+            btn.classList.remove('text-gray-500');
+            icon.className = 'fas fa-volume-up';
+            text.innerText = 'Suara On';
+            // Play a silent sound to unlock audio
+            const utterance = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(utterance);
+            window.showToast('Notifikasi suara diaktifkan');
+        } else {
+            btn.classList.remove('text-coffee');
+            btn.classList.add('text-gray-500');
+            icon.className = 'fas fa-volume-mute';
+            text.innerText = 'Suara Off';
+            window.showToast('Notifikasi suara dimatikan');
+        }
+    }
+
+    function playOrderNotification(items = []) {
+        if (soundEnabled && 'speechSynthesis' in window) {
+            let text = 'Pesanan baru masuk. ';
+            if (items.length > 0) {
+                const itemNames = items.map(i => i.name).join(', ');
+                text += 'Isinya: ' + itemNames;
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function speakOrder(id) {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            return;
+        }
+        
+        const card = orderCards.get(String(id));
+        if (!card) return;
+        
+        // Find item names from the card's content
+        const names = Array.from(card.querySelectorAll('.text-gray-800 b, .text-gray-800'))
+            .filter(el => el.innerText.includes(' x'))
+            .map(el => el.innerText.split(' x')[0].trim());
+        
+        if (names.length > 0) {
+            const text = 'Pesanan meja ' + card.querySelector('.bg-coffee').innerText.replace('Meja ', '') + '. Isinya: ' + names.join(', ');
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            window.speechSynthesis.speak(utterance);
+        }
+    }
 
     function formatRupiah(value) {
         return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
@@ -336,6 +402,14 @@
             const grid = document.getElementById('orders-grid');
             const emptyState = document.getElementById('empty-state');
 
+            // Sound Notification logic
+            if (lastOrderCount !== -1 && orders.length > lastOrderCount) {
+                // Get the newest order(s)
+                const newOrders = orders.slice(lastOrderCount);
+                newOrders.forEach(order => playOrderNotification(order.items));
+            }
+            lastOrderCount = orders.length;
+
             if (!orders || orders.length === 0) {
                 grid.innerHTML = '';
                 orderCards.clear();
@@ -388,6 +462,9 @@
                         <div class="flex justify-between items-center mb-4">
                             <div class="flex items-center gap-2">
                                 <span class="bg-coffee text-white px-4 py-1.5 rounded-xl font-bold text-[10px] shadow-sm">Meja ${order.table}</span>
+                                <button onclick="speakOrder('${order.id}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-coffee/10 hover:text-coffee flex items-center justify-center transition-all">
+                                    <i class="fas fa-volume-up text-xs"></i>
+                                </button>
                                 ${isReady ? `<span class="bg-green-600 text-white px-3 py-1.5 rounded-xl font-bold text-[9px]">SIAP DIAMBIL</span>` : ''}
                             </div>
                             <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">${order.time}</span>
@@ -611,24 +688,47 @@
             const container = document.getElementById('ref-menu-list');
             container.innerHTML = '';
             
+            const STORAGE_URL = "{{ asset('storage') }}";
+
             registeredMenus.forEach(menu => {
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-3 bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100 rounded-xl transition-all cursor-pointer';
+                // Base style for all items
+                item.className = 'group flex items-center gap-3 p-2.5 bg-white hover:bg-coffee/5 border border-gray-100 hover:border-coffee/20 rounded-2xl transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md';
                 item.onclick = () => addMenuItemToCashierCart(menu);
                 
-                const hasBarcode = menu.barcode ? `<span class="bg-coffee/10 text-coffee font-mono px-2 py-0.5 rounded text-[9px] font-bold">${menu.barcode}</span>` : '<span class="text-gray-300 text-[9px]">Tanpa barcode</span>';
-                
+                let thumbnail = 'https://placehold.co/100x100?text=Menu';
+                if (menu.image && !menu.image.startsWith('http')) {
+                    thumbnail = `${STORAGE_URL}/${menu.image}`;
+                } else if (menu.image && menu.image.startsWith('http')) {
+                    thumbnail = menu.image;
+                }
+
+                const isSnackDrink = menu.category === 'Snack & Minuman';
+                const barcodeImage = menu.barcode_image ? `${STORAGE_URL}/${menu.barcode_image}` : null;
+
                 item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                            <i class="fas fa-mug-hot text-xs text-gray-400"></i>
+                    <div class="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200">
+                        <img src="${thumbnail}" class="w-full h-full object-cover">
+                        ${isSnackDrink && barcodeImage ? `
+                            <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <img src="${barcodeImage}" class="w-full h-full object-contain bg-white/80 p-0.5">
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="font-bold text-xs text-gray-800 truncate">${menu.name}</p>
+                            <span class="text-[9px] font-bold text-coffee whitespace-nowrap">Rp ${Number(menu.price).toLocaleString('id-ID')}</span>
                         </div>
-                        <div>
-                            <p class="font-bold text-xs text-gray-700">${menu.name}</p>
-                            <p class="text-[10px] text-gray-400">Rp ${Number(menu.price).toLocaleString('id-ID')}</p>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[9px] font-medium text-gray-400 uppercase tracking-wider">${menu.category}</span>
+                            ${isSnackDrink ? '<span class="w-1 h-1 rounded-full bg-coffee/40"></span>' : ''}
+                            ${menu.barcode ? `<span class="text-[9px] font-mono text-gray-400">${menu.barcode}</span>` : ''}
                         </div>
                     </div>
-                    <div>${hasBarcode}</div>
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-coffee">
+                        <i class="fas fa-plus-circle text-sm"></i>
+                    </div>
                 `;
                 container.appendChild(item);
             });

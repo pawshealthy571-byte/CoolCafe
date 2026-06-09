@@ -13,6 +13,7 @@ class Menu extends Model
         'description',
         'image',
         'barcode',
+        'barcode_image',
         'add_ons',
         'is_available',
     ];

@@ -22,6 +22,7 @@ class MenuController extends Controller
             'image' => ['nullable', 'string'],
             'image_file' => ['nullable', 'image', 'max:5120'],
             'barcode' => ['nullable', 'string', 'max:100', 'unique:menus'],
+            'barcode_image_file' => ['nullable', 'image', 'max:2048'],
             'add_ons' => ['nullable'],
             'is_available' => ['required'],
         ]);
@@ -37,7 +38,13 @@ class MenuController extends Controller
             return response()->json(['message' => $imageError], 422);
         }
 
+        $barcodeImageError = $this->storeBarcodeImage($request, $data);
+        if ($barcodeImageError) {
+            return response()->json(['message' => $barcodeImageError], 422);
+        }
+
         unset($data['image_file']);
+        unset($data['barcode_image_file']);
 
         $menu = Menu::create($data);
 
@@ -60,6 +67,7 @@ class MenuController extends Controller
             'image' => ['nullable', 'string'],
             'image_file' => ['nullable', 'image', 'max:5120'],
             'barcode' => ['nullable', 'string', 'max:100', 'unique:menus,barcode,'.$id],
+            'barcode_image_file' => ['nullable', 'image', 'max:2048'],
             'add_ons' => ['nullable'],
             'is_available' => ['nullable'],
         ]);
@@ -75,11 +83,38 @@ class MenuController extends Controller
             return response()->json(['message' => $imageError], 422);
         }
 
+        $barcodeImageError = $this->storeBarcodeImage($request, $data, $menu);
+        if ($barcodeImageError) {
+            return response()->json(['message' => $barcodeImageError], 422);
+        }
+
         unset($data['image_file']);
+        unset($data['barcode_image_file']);
 
         $menu->update($data);
 
         return response()->json($menu);
+    }
+
+    private function storeBarcodeImage(Request $request, array &$data, ?Menu $menu = null): ?string
+    {
+        $uploadedImage = $request->file('barcode_image_file');
+
+        if (! $uploadedImage) {
+            return null;
+        }
+
+        if (! $uploadedImage->isValid()) {
+            return 'Upload gambar barcode gagal: '.$uploadedImage->getErrorMessage();
+        }
+
+        if ($menu?->barcode_image && ! str_starts_with($menu->barcode_image, 'http')) {
+            Storage::disk('public')->delete($menu->barcode_image);
+        }
+
+        $data['barcode_image'] = $uploadedImage->store('barcodes', 'public');
+
+        return null;
     }
 
     private function storeMenuImage(Request $request, array &$data, ?Menu $menu = null): ?string

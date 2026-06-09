@@ -23,7 +23,7 @@
         <button type="button" onclick="filterMenuCategory('all')" data-menu-filter="all" class="menu-filter bg-coffee text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Semua</button>
         <button type="button" onclick="filterMenuCategory('Paket')" data-menu-filter="Paket" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Paket</button>
         <button type="button" onclick="filterMenuCategory('Bakery')" data-menu-filter="Bakery" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Bakery</button>
-        <button type="button" onclick="filterMenuCategory('Minuman')" data-menu-filter="Minuman" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Minuman</button>
+        <button type="button" onclick="filterMenuCategory('Snack & Minuman')" data-menu-filter="Snack & Minuman" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Snack & Minuman</button>
         <button type="button" onclick="filterMenuCategory('Main Course')" data-menu-filter="Main Course" class="menu-filter bg-transparent text-gray-500 hover:bg-gray-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all">Main Course</button>
     </div>
 
@@ -34,6 +34,7 @@
                     <tr>
                         <th class="text-left px-6 py-5">Menu</th>
                         <th class="text-left px-6 py-5">Barcode</th>
+                        <th class="text-left px-6 py-5">Foto Barcode</th>
                         <th class="text-left px-6 py-5">Kategori</th>
                         <th class="text-left px-6 py-5">Harga</th>
                         <th class="text-left px-6 py-5">Status</th>
@@ -66,7 +67,7 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kategori</label>
                 <select id="menu-category" required onchange="toggleAddOnField()" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
                     <option value="Bakery">Bakery</option>
-                    <option value="Minuman">Minuman</option>
+                    <option value="Snack & Minuman">Snack & Minuman</option>
                     <option value="Main Course">Main Course</option>
                     <option value="Paket">Paket</option>
                 </select>
@@ -78,6 +79,10 @@
             <div>
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Barcode</label>
                 <input type="text" id="menu-barcode" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30" placeholder="Scan/ketik barcode...">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Foto Barcode</label>
+                <input type="file" id="barcode-image-file" name="barcode_image_file" accept="image/*" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:border-coffee/30">
             </div>
             <div>
                 <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Foto Menu</label>
@@ -200,9 +205,10 @@
 
     function renderMenuTable() {
         const tbody = document.getElementById('menu-table-body');
+        // Logika filter yang lebih inklusif jika kategori tidak tepat sama
         const visibleMenus = activeMenuCategory === 'all'
             ? menus
-            : menus.filter(menu => menu.category === activeMenuCategory);
+            : menus.filter(menu => (menu.category || '').toLowerCase() === activeMenuCategory.toLowerCase());
 
         tbody.innerHTML = visibleMenus.length ? '' : '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">Belum ada menu di kategori ini.</td></tr>';
         
@@ -211,6 +217,8 @@
             if (menu.image && !menu.image.startsWith('http')) {
                 imageUrl = `${STORAGE_URL}/${menu.image}`;
             }
+
+            let barcodeImageUrl = menu.barcode_image ? `${STORAGE_URL}/${menu.barcode_image}` : null;
 
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50 transition-colors';
@@ -229,6 +237,9 @@
                 </td>
                 <td class="px-6 py-4">
                     <span class="text-xs font-mono text-gray-600">${menu.barcode || '-'}</span>
+                </td>
+                <td class="px-6 py-4">
+                    ${barcodeImageUrl ? `<img src="${barcodeImageUrl}" class="w-16 h-8 object-contain">` : '-'}
                 </td>
                 <td class="px-6 py-4">
                     <span class="text-[10px] font-bold text-gray-500 uppercase">${menu.category}</span>
@@ -621,6 +632,12 @@
             formData.append('category', document.getElementById('menu-category').value);
             formData.append('price', document.getElementById('menu-price').value);
             formData.append('description', document.getElementById('menu-description').value);
+            
+            const barcodeFileInput = document.getElementById('barcode-image-file');
+            if (barcodeFileInput.files[0]) {
+                formData.append('barcode_image_file', barcodeFileInput.files[0]);
+            }
+
             const parseAddOns = () => {
                 const text = document.getElementById('menu-add-ons').value.trim();
                 if (!text) return [];

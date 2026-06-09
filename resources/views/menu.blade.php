@@ -113,6 +113,9 @@
             <div class="col-span-8 bg-white rounded-xl px-3 py-2.5 border border-coffee-100 shadow-sm flex items-center gap-2">
                 <i class="fas fa-search text-coffee-400 text-xs"></i>
                 <input type="text" id="search-input" oninput="searchMenu()" placeholder="Cari kopi, roti..." class="w-full bg-transparent focus:outline-none text-xs font-semibold text-coffee-900">
+                <button type="button" onclick="startVoiceSearch()" id="voice-search-btn" class="text-coffee-400 hover:text-coffee transition-colors">
+                    <i class="fas fa-microphone text-xs"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -218,7 +221,13 @@
 
             <!-- Order Note -->
             <div class="mb-6">
-                <p class="text-xs font-bold text-coffee-950 mb-2 uppercase tracking-wider">Catatan Pesanan (Opsional)</p>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-coffee-950 uppercase tracking-wider">Catatan Pesanan (Opsional)</p>
+                    <button type="button" onclick="startVoiceToText('order-note')" class="text-coffee-400 hover:text-coffee transition-colors flex items-center gap-1">
+                        <i class="fas fa-microphone text-[10px]"></i>
+                        <span class="text-[9px] font-bold">Dikte</span>
+                    </button>
+                </div>
                 <textarea id="order-note" placeholder="Contoh: Minta sendok lebih, kopi manis..." class="w-full bg-coffee-50/30 rounded-xl p-3 text-xs border border-coffee-100 focus:border-coffee-400 focus:bg-white h-20 outline-none transition-all placeholder:text-coffee-300 font-semibold"></textarea>
             </div>
 
@@ -272,7 +281,13 @@
                     </div>
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-coffee-950 mb-2 uppercase tracking-wider">Catatan Item</p>
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-xs font-bold text-coffee-950 uppercase tracking-wider">Catatan Item</p>
+                        <button type="button" onclick="startVoiceToText('custom-note')" class="text-coffee-400 hover:text-coffee transition-colors flex items-center gap-1">
+                            <i class="fas fa-microphone text-[10px]"></i>
+                            <span class="text-[9px] font-bold">Dikte</span>
+                        </button>
+                    </div>
                     <textarea id="custom-note" placeholder="Contoh: Es sedikit, susu ganti oats..." class="w-full bg-coffee-50/30 rounded-xl p-3 text-xs border border-coffee-100 focus:border-coffee-400 focus:bg-white h-20 outline-none transition-all placeholder:text-coffee-300 font-semibold"></textarea>
                 </div>
             </div>
@@ -297,7 +312,13 @@
             </div>
             
             <div class="mb-6">
-                <p class="text-xs font-bold text-coffee-950 mb-2 uppercase tracking-wider">Catatan Paket</p>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs font-bold text-coffee-950 uppercase tracking-wider">Catatan Paket</p>
+                    <button type="button" onclick="startVoiceToText('package-note')" class="text-coffee-400 hover:text-coffee transition-colors flex items-center gap-1">
+                        <i class="fas fa-microphone text-[10px]"></i>
+                        <span class="text-[9px] font-bold">Dikte</span>
+                    </button>
+                </div>
                 <textarea id="package-note" placeholder="Contoh: kopi hangat, ekstra saos..." class="w-full bg-coffee-50/30 rounded-xl p-3 text-xs border border-coffee-100 focus:border-coffee-400 focus:bg-white h-20 outline-none transition-all placeholder:text-coffee-300 font-semibold"></textarea>
             </div>
             <button onclick="confirmPackageCustomization()" class="w-full bg-coffee text-white hover:bg-coffee-dark py-4 rounded-2xl font-bold text-sm shadow-md transition-all cursor-pointer">Tambah Paket</button>
@@ -651,6 +672,76 @@
                     item.style.display = 'none';
                 }
             });
+        }
+
+        function startVoiceSearch() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                return showToast('Browser Anda tidak mendukung pencarian suara.', 'error');
+            }
+
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new Recognition();
+            const btn = document.getElementById('voice-search-btn');
+            const icon = btn.querySelector('i');
+
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                icon.className = 'fas fa-microphone text-red-500 animate-pulse';
+                showToast('Mendengarkan...', 'info');
+            };
+
+            recognition.onerror = (event) => {
+                icon.className = 'fas fa-microphone text-coffee-400';
+                console.error('Speech recognition error', event.error);
+                showToast('Gagal mendengarkan suara.', 'error');
+            };
+
+            recognition.onend = () => {
+                icon.className = 'fas fa-microphone text-coffee-400';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const input = document.getElementById('search-input');
+                input.value = transcript;
+                searchMenu();
+                showToast(`Mencari: "${transcript}"`);
+            };
+
+            recognition.start();
+        }
+
+        function startVoiceToText(targetId) {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                return showToast('Browser Anda tidak mendukung dikte suara.', 'error');
+            }
+
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new Recognition();
+
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                showToast('Mendengarkan catatan...', 'info');
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                showToast('Gagal mendengarkan suara.', 'error');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const textarea = document.getElementById(targetId);
+                textarea.value = (textarea.value ? textarea.value + ' ' : '') + transcript;
+                showToast('Catatan ditambahkan!');
+            };
+
+            recognition.start();
         }
 
         async function sendOrder() {

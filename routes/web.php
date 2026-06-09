@@ -542,6 +542,8 @@ function userHasRole(array $roles): bool
     return Auth::check() && in_array(Auth::user()->role, $roles, true);
 }
 
+require __DIR__.'/voucher.php';
+
 function readCoolCafeSales(): array
 {
     if (! Storage::disk('local')->exists('coolcafe_sales.json')) {
@@ -551,6 +553,22 @@ function readCoolCafeSales(): array
     $sales = json_decode(Storage::disk('local')->get('coolcafe_sales.json'), true);
 
     return is_array($sales) ? $sales : [];
+}
+
+function readCoolCafeVouchers(): array
+{
+    if (! Storage::disk('local')->exists('coolcafe_vouchers.json')) {
+        return [];
+    }
+
+    $vouchers = json_decode(Storage::disk('local')->get('coolcafe_vouchers.json'), true);
+
+    return is_array($vouchers) ? $vouchers : [];
+}
+
+function writeCoolCafeVouchers(array $vouchers): void
+{
+    Storage::disk('local')->put('coolcafe_vouchers.json', json_encode($vouchers, JSON_PRETTY_PRINT));
 }
 
 function readCoolCafeIngredients(): array
@@ -574,3 +592,5 @@ function readCoolCafeExpenses(): array
 
     return is_array($expenses) ? $expenses : [];
 }
+
+

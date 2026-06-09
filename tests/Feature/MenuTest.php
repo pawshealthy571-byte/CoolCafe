@@ -25,18 +25,22 @@ class MenuTest extends TestCase
         Storage::fake('public');
     }
 
-    public function test_create_menu_with_image_file(): void
+    public function test_create_menu_with_barcode_image_file(): void
     {
-        $file = UploadedFile::fake()->create('menu.txt', 100);
+        $file = UploadedFile::fake()->image('barcode.jpg');
 
         $response = $this->postJson('/admin/menus', [
-            'name' => 'Test Menu',
-            'category' => 'Food',
+            'name' => 'Test Menu with Barcode',
+            'category' => 'Snack & Minuman',
             'price' => 10000,
-            'image_file' => $file,
+            'barcode' => '123456789',
+            'barcode_image_file' => $file,
             'is_available' => true,
         ]);
 
         $response->assertStatus(200);
+        $this->assertDatabaseHas('menus', ['barcode' => '123456789']);
+        $menu = \App\Models\Menu::where('barcode', '123456789')->first();
+        $this->assertNotNull($menu->barcode_image);
     }
 }

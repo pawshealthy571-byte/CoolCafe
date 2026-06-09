@@ -28,4 +28,8 @@
         <i class="fas fa-users-gear w-5"></i>
         <span class="text-sm">Kelola Pengguna</span>
     </a>
+    <a href="/admin/management/vouchers" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all {{ Request::is('admin/management/vouchers*') ? 'bg-white/10 font-bold' : 'text-white/70' }}">
+        <i class="fas fa-ticket w-5"></i>
+        <span class="text-sm">Kelola Voucher</span>
+    </a>
 </div>
