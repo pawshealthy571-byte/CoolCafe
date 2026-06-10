@@ -43,9 +43,9 @@
             "npm run build"
         ],
         "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fb7185\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"npm run dev\" --names=server,queue,vite --kill-others"
+            "npx.cmd concurrently -c \"#93c5fd,#c4b5fd,#fb7185\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"npm run dev\" --names=server,queue,vite --kill-others"
         ],
+        "format": "vendor/bin/pint",
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
@@ -81,6 +81,12 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "process-timeout": 0,
+        "audit": {
+            "ignore": [
+                "PKSA-mdq4-51ck-6kdq"
+            ]
         }
     },
     "minimum-stability": "stable",

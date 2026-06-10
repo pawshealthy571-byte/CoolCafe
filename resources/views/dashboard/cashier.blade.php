@@ -65,7 +65,14 @@
         <h2 id="section-title" class="text-2xl font-bold text-gray-800">Pesanan Masuk</h2>
         <p id="section-desc" class="text-gray-500 text-sm">Monitor pesanan pelanggan secara real-time.</p>
     </div>
-    <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl flex-wrap justify-center">
+    <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl flex-wrap justify-center relative z-[10000]">
+        <!-- Sensor Gerak Tangan -->
+        <button onclick="toggleGestureSystem()" class="px-4 py-2 rounded-xl text-[10px] font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-1.5 cursor-pointer">
+            <i class="fas fa-hand-sparkles"></i> Sensor: <span id="gesture-toggle-text">OFF</span>
+        </button>
+        <!-- Audio for sound feedback -->
+        <audio id="toggle-sound" src="https://actions.google.com/sounds/v1/ui/button_toggle.ogg" preload="auto"></audio>
+        
         <button id="sound-toggle" onclick="toggleSound()" class="px-3 py-2 rounded-xl text-[10px] font-bold transition-all bg-white text-gray-500 hover:text-coffee flex items-center gap-1.5">
             <i class="fas fa-volume-mute"></i> <span>Suara Off</span>
         </button>
@@ -125,27 +132,7 @@
                     </div>
                 </div>
 
-                <!-- AI Gesture Assist -->
-                <div class="mb-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4">
-                    <button type="button" onclick="toggleGestureCamera()" class="flex items-center justify-between w-full text-xs font-bold text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-all outline-none">
-                        <span class="flex items-center gap-2">
-                            <i class="fas fa-hand-sparkles"></i> Kamera Sensor Gerak Tangan
-                        </span>
-                        <span id="gesture-btn-text" class="text-xs text-indigo-400 font-semibold">Buka Kamera</span>
-                    </button>
-                    <div id="gesture-scanner-container" class="hidden mt-4 relative aspect-video w-full max-w-sm mx-auto shadow-inner bg-black rounded-xl overflow-hidden">
-                        <video id="gesture-video" class="w-full h-full object-cover transform scale-x-[-1]" autoplay playsinline></video>
-                        <canvas id="gesture-canvas" class="absolute inset-0 w-full h-full transform scale-x-[-1] pointer-events-none"></canvas>
-                        <div id="gesture-output" class="absolute bottom-4 left-0 right-0 text-center text-white font-bold text-lg bg-black/50 py-1">Memuat Sensor...</div>
-                    </div>
-                    <div id="gesture-hint" class="text-[10px] text-indigo-500 mt-3 text-center hidden flex flex-col gap-1">
-                        <span>☝️ <b>Telunjuk</b>: +1 barang terpilih</span>
-                        <span>✌️ <b>Dua Jari</b>: +2 barang terpilih</span>
-                        <span>👎 <b>Jempol Bawah</b>: Kurangi 1 barang</span>
-                        <span>👍 <b>Jempol Atas</b>: Ganti pilihan barang di keranjang</span>
-                        <span class="text-indigo-300">Tahan gesture selama 1 detik. Gunakan tangan mengepal ✊ untuk mereset.</span>
-                    </div>
-                </div>
+
 
                 <div class="flex gap-2 bg-gray-50 border border-gray-100 rounded-2xl p-2 focus-within:border-coffee/30 focus-within:bg-white transition-all shadow-inner">
                     <input type="text" id="scanner-input" placeholder="Scan barcode disini..." class="flex-1 bg-transparent px-3 py-2 text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400" autofocus>
@@ -1150,176 +1137,161 @@
     }, 5000);
 </script>
 
-<script type="module">
-import { GestureRecognizer, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
+<script>
+    // Global variables
+    window.webcamRunning = false;
+    window.video = document.getElementById('gesture-video') || document.createElement('video');
+    window.video.id = 'gesture-video';
+    window.video.style.position = 'fixed';
+    window.video.style.bottom = '10px';
+    window.video.style.right = '10px';
+    window.video.style.width = '160px';
+    window.video.style.height = '120px';
+    window.video.style.zIndex = '10000';
+    window.video.style.border = '2px solid white';
+    window.video.style.borderRadius = '8px';
+    window.video.autoplay = true;
+    window.video.playsInline = true;
+    if (!document.body.contains(window.video)) document.body.appendChild(window.video);
 
-window.gestureRecognizer = null;
-let webcamRunning = false;
-const video = document.getElementById("gesture-video");
-const canvasElement = document.getElementById("gesture-canvas");
-const canvasCtx = canvasElement.getContext("2d");
-const gestureOutput = document.getElementById("gesture-output");
+    window.canvasElement = document.getElementById('gesture-canvas') || document.createElement('canvas');
+    window.canvasElement.id = 'gesture-canvas';
+    window.canvasElement.style.pointerEvents = 'none';
+    window.canvasElement.style.position = 'fixed';
+    window.canvasElement.style.inset = '0';
+    window.canvasElement.style.width = '100%';
+    window.canvasElement.style.height = '100%';
+    window.canvasElement.style.zIndex = '9999';
+    window.canvasCtx = window.canvasElement.getContext("2d");
+    window.gestureOutput = document.getElementById("gesture-output") || document.createElement('div');
 
-const createGestureRecognizer = async () => {
-    try {
-        const vision = await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
-        );
-        window.gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
-            baseOptions: {
-                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-                delegate: "GPU"
-            },
-            runningMode: "VIDEO"
-        });
-        if(gestureOutput) gestureOutput.innerText = "Sensor Siap! Lakukan Gesture";
-    } catch(e) {
-        console.error("AI Model error", e);
-        if(gestureOutput) gestureOutput.innerText = "Error memuat Sensor";
-    }
-};
-createGestureRecognizer();
-
-let lastVideoTime = -1;
-let lastGesture = '';
-let gestureCount = 0;
-let actionTriggered = false;
-
-async function predictWebcam() {
-    if (!webcamRunning) return;
-    
-    canvasElement.width = video.videoWidth;
-    canvasElement.height = video.videoHeight;
-    
-    let nowInMs = Date.now();
-    if (video.currentTime !== lastVideoTime && window.gestureRecognizer) {
-        lastVideoTime = video.currentTime;
-        const results = window.gestureRecognizer.recognizeForVideo(video, nowInMs);
+    window.toggleGestureSystem = function() {
+        const toggleText = document.getElementById('gesture-toggle-text');
+        const sound = document.getElementById('toggle-sound');
+        if(sound) sound.play();
+        window.webcamRunning = !window.webcamRunning;
         
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        
-        if (results.gestures.length > 0) {
-            const categoryName = results.gestures[0][0].categoryName;
-            
-            let gName = categoryName;
-            if (categoryName === 'Pointing_Up') gName = '☝️ Telunjuk (Tambah 1)';
-            else if (categoryName === 'Victory') gName = '✌️ Dua Jari (Tambah 2)';
-            else if (categoryName === 'Thumb_Down') gName = '👎 Jempol Bawah (Kurang 1)';
-            else if (categoryName === 'Thumb_Up') gName = '👍 Jempol Atas (Pilih Barang)';
-            else if (categoryName === 'None') gName = 'Tidak ada';
-            else if (categoryName === 'Closed_Fist') gName = '✊ Mengepal (Reset)';
-            else if (categoryName === 'Open_Palm') gName = '✋ Telapak Terbuka';
-            
-            gestureOutput.innerText = `Gesture: ${gName}`;
-            
-            if (categoryName === lastGesture && categoryName !== 'None' && categoryName !== 'Closed_Fist' && categoryName !== 'Open_Palm') {
-                gestureCount++;
-            } else {
-                lastGesture = categoryName;
-                gestureCount = 0;
-                actionTriggered = false;
-            }
-            
-            if (gestureCount >= 15 && !actionTriggered) {
-                actionTriggered = true;
-                triggerGestureAction(categoryName);
-            }
-            
-            if (categoryName === 'Closed_Fist' || categoryName === 'Open_Palm') {
-                actionTriggered = false; 
-            }
-            
+        if (window.webcamRunning) {
+            toggleText.innerText = "ON";
+            toggleText.className = "text-xs text-coffee font-semibold";
+            window.canvasElement.style.zIndex = '999'; 
+            if (!document.body.contains(window.canvasElement)) document.body.appendChild(window.canvasElement);
+            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                window.video.srcObject = stream;
+                window.video.addEventListener("loadeddata", window.predictWebcam);
+            });
         } else {
-            gestureOutput.innerText = "Mendeteksi...";
-            lastGesture = '';
-            gestureCount = 0;
+            toggleText.innerText = "OFF";
+            toggleText.className = "text-xs text-gray-400 font-semibold";
+            if (document.body.contains(window.canvasElement)) document.body.removeChild(window.canvasElement);
+            if (window.video.srcObject) window.video.srcObject.getTracks().forEach(track => track.stop());
         }
-        canvasCtx.restore();
-    }
-    
-    if (webcamRunning) {
-        window.requestAnimationFrame(predictWebcam);
-    }
-}
+    };
+</script>
+<script type="module">
+    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
-window.triggerGestureAction = function(gesture) {
-    const cart = window.getCashierCart();
-    if (!cart || cart.length === 0) {
-        window.showToast('Keranjang kosong! Scan barang dulu.', 'error');
-        return;
-    }
-    
-    if (gesture === 'Thumb_Up') {
-        window.gestureTargetIndex--;
-        if (window.gestureTargetIndex < 0) {
-            window.gestureTargetIndex = cart.length - 1;
+    window.handLandmarker = null;
+
+    const createHandLandmarker = async () => {
+        try {
+            console.log("Initializing HandLandmarker...");
+            const vision = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+            );
+            window.handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: 1
+            });
+            console.log("HandLandmarker created.");
+            if(window.gestureOutput) window.gestureOutput.innerText = "Sensor Siap! Gunakan Telunjuk";
+        } catch(e) {
+            console.error("AI Model error", e);
+            if(window.gestureOutput) window.gestureOutput.innerText = "Error memuat Sensor: " + e.message;
         }
-        window.updateCashierCartUI();
-        window.showToast(`Gesture: Memilih ${cart[window.gestureTargetIndex].name}`);
-        return;
-    }
-    
-    let targetIndex = window.gestureTargetIndex !== -1 ? window.gestureTargetIndex : cart.length - 1;
-    if (targetIndex >= cart.length) {
-        targetIndex = cart.length - 1;
-        window.gestureTargetIndex = targetIndex;
-    }
-    
-    const lastItem = cart[targetIndex];
-    if (!lastItem) return;
-    
-    if (gesture === 'Pointing_Up') {
-        window.addCashierCartQty(lastItem.id);
-        window.showToast(`Gesture: Menambah 1 ${lastItem.name}`);
-    } else if (gesture === 'Victory') {
-        window.addCashierCartQty(lastItem.id);
-        window.addCashierCartQty(lastItem.id);
-        window.showToast(`Gesture: Menambah 2 ${lastItem.name}`);
-    } else if (gesture === 'Thumb_Down') {
-        window.removeCashierCartQty(lastItem.id);
-        window.showToast(`Gesture: Mengurangi 1 ${lastItem.name}`);
-        const newCart = window.getCashierCart();
-        if (newCart.length < cart.length) {
-            window.gestureTargetIndex = newCart.length - 1;
-            window.updateCashierCartUI();
-        }
-    }
-}
+    };
+    createHandLandmarker();
 
+    let lastVideoTime = -1;
 
-window.toggleGestureCamera = function() {
-    const container = document.getElementById('gesture-scanner-container');
-    const hint = document.getElementById('gesture-hint');
-    const btnText = document.getElementById('gesture-btn-text');
-    
-    if (!window.gestureRecognizer) {
-        window.showToast('Sistem sensor masih memuat, tunggu 2 detik...', 'info');
-        return;
-    }
-    
-    if (!webcamRunning) {
-        webcamRunning = true;
-        container.classList.remove('hidden');
-        hint.classList.remove('hidden');
-        btnText.innerText = 'Tutup Kamera';
+    // Track cursor state
+    window.lastX = window.innerWidth / 2;
+    window.lastY = window.innerHeight / 2;
+    window.lastClickTime = 0;
+    const smoothing = 0.2; 
+    const CLICK_COOLDOWN = 800; 
+
+    // State for clutch
+    let isMoving = false;
+    let lastHandPos = { x: 0, y: 0 };
+
+    window.predictWebcam = async function() {
+        if (!window.webcamRunning) return;
         
-        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-            video.srcObject = stream;
-            video.addEventListener("loadeddata", predictWebcam);
-        }).catch(err => {
-            console.error(err);
-            window.showToast('Izin kamera ditolak atau kamera tidak tersedia', 'error');
-        });
-    } else {
-        webcamRunning = false;
-        container.classList.add('hidden');
-        hint.classList.add('hidden');
-        btnText.innerText = 'Buka Kamera';
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
+        window.canvasElement.width = window.innerWidth;
+        window.canvasElement.height = window.innerHeight;
+        
+        let nowInMs = Date.now();
+        if (window.video.currentTime !== lastVideoTime && window.handLandmarker) {
+            lastVideoTime = window.video.currentTime;
+            const results = window.handLandmarker.detectForVideo(window.video, nowInMs);
+            
+            window.canvasCtx.save();
+            window.canvasCtx.clearRect(0, 0, window.canvasElement.width, window.canvasElement.height);
+            
+            if (results.landmarks.length > 0) {
+                const landmarks = results.landmarks[0];
+                const indexFingerTip = landmarks[8];
+                const thumbTip = landmarks[4];
+                
+                const dxPinch = indexFingerTip.x - thumbTip.x;
+                const dyPinch = indexFingerTip.y - thumbTip.y;
+                const pinchDistance = Math.sqrt(dxPinch * dxPinch + dyPinch * dyPinch);
+                
+                const isPinched = pinchDistance < 0.05;
+                const isOpen = pinchDistance > 0.15; 
+                
+                if (isOpen) {
+                    const deltaX = (indexFingerTip.x - lastHandPos.x) * -2000;
+                    const deltaY = (indexFingerTip.y - lastHandPos.y) * 2000;
+                    
+                    window.lastX = Math.max(0, Math.min(window.lastX + deltaX, window.innerWidth));
+                    window.lastY = Math.max(0, Math.min(window.lastY + deltaY, window.innerHeight));
+                    
+                    isMoving = true;
+                } else {
+                    isMoving = false;
+                }
+                
+                lastHandPos = { x: indexFingerTip.x, y: indexFingerTip.y };
+                
+                window.canvasCtx.fillStyle = isPinched ? "rgba(220, 38, 38, 0.8)" : (isMoving ? "rgba(79, 70, 229, 0.8)" : "rgba(100, 100, 100, 0.5)");
+                window.canvasCtx.beginPath();
+                window.canvasCtx.arc(window.lastX, window.lastY, 12, 0, 2 * Math.PI);
+                window.canvasCtx.fill();
+                
+                if (isPinched && (nowInMs - window.lastClickTime > CLICK_COOLDOWN)) {
+                    const element = document.elementFromPoint(window.lastX, window.lastY);
+                    if (element) {
+                        element.click();
+                        window.lastClickTime = nowInMs;
+                    }
+                }
+                
+                window.gestureOutput.innerText = `Mouse: ${Math.round(window.lastX)}, ${Math.round(window.lastY)} | ${isMoving ? 'Moving' : (isPinched ? 'Click' : 'Stationary')}`;
+            } else {
+                window.gestureOutput.innerText = "Mendeteksi Tangan...";
+            }
+            window.canvasCtx.restore();
+        }
+        
+        if (window.webcamRunning) {
+            window.requestAnimationFrame(window.predictWebcam);
         }
     }
-};
 </script>
 @endpush
